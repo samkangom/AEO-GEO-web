@@ -29,6 +29,17 @@ export const siteConfig = {
       light: "#D9F2EE",
       dark: "#0A7A6D",
     },
+    /**
+     * Chart series, one fixed colour per AI engine (colour follows the engine,
+     * never its rank). Validated together for colour-blind separation and
+     * contrast on white.
+     */
+    engines: {
+      openai: "#0E9F8E",
+      anthropic: "#EB6834",
+      gemini: "#2A78D6",
+      perplexity: "#4A3AA7",
+    },
   },
 } as const;
 

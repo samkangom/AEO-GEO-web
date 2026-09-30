@@ -3,6 +3,7 @@
  * Kept inside lib/engines so provider SDKs are only imported here.
  */
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { log } from "@/lib/log";
 import { INTENTS, LANGUAGES, PromptsUnavailableError, type PromptLike } from "@/lib/prompts/types";
@@ -95,4 +96,32 @@ export async function generatePromptSet(brand: BrandContext): Promise<GeneratedP
 
   log.info("prompts.generated", { brand: brand.url, count: clean.length, model: response.model });
   return { industry: industry.trim(), prompts: clean };
+}
+
+export type Sentiment = "positive" | "neutral" | "negative";
+
+/** Small, fast model for the per-answer sentiment tag. */
+export const CLASSIFIER_MODEL = "claude-haiku-4-5";
+
+const SentimentSchema = z.object({ sentiment: z.enum(["positive", "neutral", "negative"]) });
+
+/**
+ * How an AI answer portrays the brand: positive (recommended / praised),
+ * neutral (listed or described without judgement), negative (criticised or
+ * advised against). Returns null when Claude isn't configured.
+ */
+export async function classifySentiment(brandName: string, answer: string): Promise<Sentiment | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  const response = await anthropicClient().messages.parse(
+    {
+      model: CLASSIFIER_MODEL,
+      max_tokens: 1024,
+      output_config: { format: zodOutputFormat(SentimentSchema) },
+      system:
+        "You classify how an AI assistant's answer portrays one named business. positive: the answer recommends or praises it. neutral: it is listed or described without a clear judgement. negative: it is criticised, flagged for problems, or advised against. Judge only the named business, not the others in the answer.",
+      messages: [{ role: "user", content: `Business: ${brandName}\n\nAnswer:\n${answer.slice(0, 12000)}` }],
+    },
+    { timeout: 30_000, maxRetries: 1 },
+  );
+  return response.parsed_output?.sentiment ?? null;
 }

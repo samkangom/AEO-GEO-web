@@ -12,8 +12,8 @@ AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude,
 | 2 | Brand CRUD (add, list, switch, edit, delete) | ✅ |
 | 3 | Audit engine (robots.txt, structured data, content signals) → score card UI | ✅ |
 | 4 | AI provider adapter (OpenAI + Anthropic) + Claude prompt engine → live-visibility check | ✅ |
-| 5 | Manual monitor run + engine_results + history | ⏳ next |
-| 6 | Dashboard polish, charts, Prompts / Monitor / Ads tabs | — |
+| 5 | Manual monitor run + engine_results + history | ✅ |
+| 6 | Dashboard polish, charts, Prompts / Monitor / Ads tabs | ⏳ next |
 | 7 | Static INR pricing page + landing page | — |
 | 8 | Seed/demo data + `MOCK_AI_RESPONSES` mode | — |
 
@@ -66,6 +66,17 @@ Every weak category shows one plain-language recommended fix. Raw findings are s
 
 Site fetching (`src/lib/audit/safe-fetch.ts`) enforces timeouts and a size cap. It follows redirects manually and refuses private or internal addresses at every hop, so the brand URL can't be used to probe internal networks.
 
+## Monitoring
+
+"Run monitor now" on the Monitor tab asks every active prompt (up to 20) to every configured engine, 8 calls at a time. Each answer is saved to `engine_results` as soon as it arrives, with:
+- whether the brand is mentioned, its list position, whether the answer cites the brand's site, and the sentiment;
+- the full answer text, citations and model;
+- or, if the call failed, the error.
+
+Mention rate is mentioned ÷ answers received. Failed calls are shown separately and never counted as "not mentioned". A run left `running` for more than 15 minutes (for example, a function timeout) shows as *Interrupted*.
+
+**Scheduled monitoring (not built):** add `app/api/cron/monitor/route.ts` (Vercel Cron, or Supabase `pg_cron` calling it). It should check the cron secret, create a service-role Supabase client, and call `runMonitorForBrand()` (`src/lib/monitor/store.ts`) for each brand that's due. See the comment on that function.
+
 ## Data model & security
 
 The schema is in `supabase/migrations/`. Only `brands` carries `user_id`. Every other table is scoped through its brand via the `owns_brand()` / `owns_run()` helpers. An `engine_results` row must also reference a prompt from the same brand as its run. A trigger creates a `profiles` row for each new auth user.
@@ -99,6 +110,7 @@ All AI calls go through `src/lib/engines/`. Nothing else imports a provider SDK.
 | Live visibility: ChatGPT | OpenAI Responses API, `gpt-5.5` (override: `OPENAI_MODEL`) | `web_search` tool, user location India, low reasoning effort |
 | Live visibility: Claude | Anthropic Messages API, `claude-opus-5-5` (override: `ANTHROPIC_MODEL`) | `web_search_20260209` tool, user location India, effort `low`. Server-side refusal fallback (`fallbacks: "default"`) is on, and the model that actually answered is recorded. |
 | Prompt generation | Claude, same model | Structured JSON output. Prompts that contain the brand name are dropped. |
+| Sentiment tag (monitor) | Claude Haiku 4.5 (`claude-haiku-4-5`) | Small, fast classification call, made only for answers that mention the brand |
 | Gemini, Perplexity | Stubs | Always "not configured" until built |
 
 Rough cost per audit with both keys: one prompt-generation call on a brand's first audit, then 10 web-search answers. Pricing: Claude Opus 5.5 is $4/$20 per million input/output tokens plus web-search fees; OpenAI pricing is per their price list.

@@ -58,6 +58,15 @@ test("prompts tab explains when Claude isn't configured", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Generate prompts" })).toBeDisabled();
 });
 
+test("monitor tab explains what's needed before a run", async ({ page }) => {
+  test.skip(AI_KEYS, "Only meaningful without AI keys");
+  await logIn(page, userA);
+  await page.goto(`${firstBrandUrl}/monitor`);
+  await expect(page.getByText("No AI engines are configured")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Run monitor now" })).toBeDisabled();
+  await expect(page.getByText("No monitor results yet")).toBeVisible();
+});
+
 test("re-run audit adds history", async ({ page }) => {
   await logIn(page, userA);
   await page.goto(firstBrandUrl);

@@ -60,6 +60,12 @@ CI (`.github/workflows/ci.yml`) runs `checks` (everything in `npm run check` plu
 2. Mention detection is `src/lib/visibility/analyze.ts`, a pure function. Reproduce a disputed answer as a case in `analyze.test.ts`.
 3. Engine call failures log `engine.openai.failed` / `engine.anthropic.failed`. Prompt problems log `prompts.generated`, `prompts.dropped_branded` or `audit.prompts_failed`.
 
+**A monitor run looks wrong**
+
+1. Open the run from Monitor → Run history. Every prompt × engine answer is listed with mentioned / position / cited / sentiment / model. "Show answer" reveals the full stored text and citations.
+2. The SQL source of truth is `engine_results` for that `run_id`. `error` is set exactly when `mentioned` is null, and a database constraint enforces this.
+3. Logs: `monitor.completed` (with counts and duration), `monitor.failed`, `monitor.result_save_failed`, `monitor.sentiment_failed`.
+
 **Audit a local fixture site through the app UI:** add `AUDIT_ALLOW_PRIVATE_HOSTS=1` to `.env.local`, run `npm run fixtures`, then add a brand with URL `http://127.0.0.1:4004`. The flag is ignored in production builds. Without it, local and private addresses are refused on purpose, as SSRF protection.
 
 **Server errors:** server logs are one JSON object per line, e.g. `{"level":"error","event":"audit.failed","brandId":"…","error":{…}}`. Filter by `event` or `brandId` locally or in Vercel → Logs. Current events: `audit.completed`, `audit.site_unreachable`, `audit.failed`, `audit.save_failed`, `brand.create_failed`, `brand.update_failed`, `brand.delete_failed`.
@@ -78,6 +84,8 @@ Browser ──> Next.js (Vercel)
              ├─ app/(auth), app/auth      login/signup pages, OAuth + email callback, sign-out
              ├─ app/dashboard/actions.ts  server actions: brand CRUD, run audit
              ├─ app/dashboard/prompt-actions.ts  generate / edit / activate prompts
+             ├─ app/dashboard/monitor-actions.ts "Run monitor now"
+             │     ├─ lib/monitor/        execute (pure orchestration) · stats (pure) · store (DB)
              │     ├─ lib/audit/          site checks (fetch → pure scoring) + live visibility
              │     ├─ lib/prompts/        prompt selection + DB persistence
              │     ├─ lib/visibility/     mention / citation / position detection (pure)

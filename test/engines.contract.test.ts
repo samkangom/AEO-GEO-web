@@ -264,3 +264,22 @@ describe("prompt generation (Claude structured output)", () => {
     }
   });
 });
+
+describe("sentiment classifier (Claude Haiku)", () => {
+  test("uses the small model with a JSON schema and returns the label", async () => {
+    const { classifySentiment, CLASSIFIER_MODEL } = await import("@/lib/engines/claude-tasks");
+    responder = () => ({
+      body: anthropicMessage(
+        [{ type: "text", text: '{"sentiment":"negative"}' }],
+        "end_turn",
+        CLASSIFIER_MODEL,
+      ),
+    });
+    const s = await classifySentiment("Kiranabooks", "Avoid Kiranabooks — frequent outages.");
+    assert.equal(s, "negative");
+    const req = captured[0];
+    assert.equal(req.body.model, "claude-haiku-4-5");
+    assert.equal((req.body.output_config as { format: { type: string } }).format.type, "json_schema");
+    assert.match((req.body.messages as { content: string }[])[0].content, /Business: Kiranabooks/);
+  });
+});

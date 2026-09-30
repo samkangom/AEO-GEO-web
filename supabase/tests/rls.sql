@@ -65,7 +65,7 @@ declare
     $q$insert into public.audits (brand_id, overall_score, breakdown) values ('aaaaaaaa-0000-0000-0000-000000000001', 1, '{}')$q$,
     $q$insert into public.prompts (brand_id, text, language, intent) values ('aaaaaaaa-0000-0000-0000-000000000001', 'x', 'en', 'local')$q$,
     $q$insert into public.monitor_runs (brand_id) values ('aaaaaaaa-0000-0000-0000-000000000001')$q$,
-    $q$insert into public.engine_results (run_id, prompt_id, engine) values ('aaaaaaaa-0000-0000-0000-0000000000e1', 'aaaaaaaa-0000-0000-0000-0000000000f1', 'openai')$q$
+    $q$insert into public.engine_results (run_id, prompt_id, engine, mentioned) values ('aaaaaaaa-0000-0000-0000-0000000000e1', 'aaaaaaaa-0000-0000-0000-0000000000f1', 'openai', false)$q$
   ];
   q text;
 begin
@@ -86,13 +86,29 @@ insert into public.monitor_runs (id, brand_id)
   values ('bbbbbbbb-0000-0000-0000-0000000000e1', 'bbbbbbbb-0000-0000-0000-000000000001');
 do $$ begin
   begin
-    insert into public.engine_results (run_id, prompt_id, engine)
-      values ('bbbbbbbb-0000-0000-0000-0000000000e1', 'aaaaaaaa-0000-0000-0000-0000000000f1', 'openai');
+    insert into public.engine_results (run_id, prompt_id, engine, mentioned)
+      values ('bbbbbbbb-0000-0000-0000-0000000000e1', 'aaaaaaaa-0000-0000-0000-0000000000f1', 'openai', false);
     raise exception 'engine_results must reject a prompt from another brand';
   exception when insufficient_privilege then
     null;
   end;
 end $$;
+
+-- A result must be either measured (mentioned set) or a recorded failure (error set).
+reset role;
+do $$ begin
+  begin
+    insert into public.engine_results (run_id, prompt_id, engine)
+      values ('aaaaaaaa-0000-0000-0000-0000000000e1', 'aaaaaaaa-0000-0000-0000-0000000000f1', 'openai');
+    raise exception 'a result with neither mentioned nor error must be rejected';
+  exception when check_violation then
+    null;
+  end;
+  insert into public.engine_results (run_id, prompt_id, engine, error)
+    values ('aaaaaaaa-0000-0000-0000-0000000000e1', 'aaaaaaaa-0000-0000-0000-0000000000f1', 'anthropic', 'rate limited');
+end $$;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
 
 -- ---------------------------------------------------------------- anon
 set local role anon;

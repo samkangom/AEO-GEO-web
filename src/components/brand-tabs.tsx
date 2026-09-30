@@ -7,17 +7,18 @@ import { cn } from "@/lib/utils";
 export function BrandTabs({ brandId }: { brandId: string }) {
   const pathname = usePathname();
   const base = `/dashboard/${brandId}`;
-  // Monitor history and Ads tabs arrive in Sprints 5–6.
+  // The Ads tab arrives in Sprint 6.
   const tabs = [
     { href: base, label: "Audit" },
     { href: `${base}/prompts`, label: "Prompts" },
+    { href: `${base}/monitor`, label: "Monitor" },
     { href: `${base}/settings`, label: "Settings" },
   ];
 
   return (
     <nav className="flex gap-1 border-b border-navy-100">
       {tabs.map((t) => {
-        const active = pathname === t.href;
+        const active = t.href === base ? pathname === base : pathname.startsWith(t.href);
         return (
           <Link
             key={t.href}

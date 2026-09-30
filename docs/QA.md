@@ -74,6 +74,20 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | PR-5 (auto) | No Anthropic key. | "Prompt generation is not configured" and the button is disabled. |
 | PR-6 | Activate prompts, then re-run the audit. | The live check prefers active prompts. The prompt text on the audit card matches. |
 
+## Monitor (needs AI keys and active prompts)
+
+| ID | Steps | Expected |
+| --- | --- | --- |
+| MON-1 (auto) | No AI keys: open the Monitor tab. | Explains that no engines are configured. "Run monitor now" is disabled. Shows "No monitor results yet". |
+| MON-2 | With keys and 0 active prompts. | Says to activate a prompt on the Prompts tab first. The button is disabled. |
+| MON-3 | Activate 4 prompts and click "Run monitor now". | The button shows progress. Within about 1–2 minutes it opens the run's detail page with 8 answers, each showing mentioned or not, position, "links to your site" where true, sentiment on mentions, and the model name. |
+| MON-4 | Back on the Monitor tab. | Stat tiles show the latest run. The chart shows a point per engine. Run history shows the run with per-engine percentages that match the detail page. |
+| MON-5 | Run it twice more. | The chart draws lines, and hover shows each engine's value "of N". |
+| MON-6 | Double-click "Run monitor now", or run it in two tabs. | The second attempt says a run is already in progress. |
+| MON-7 | Break one key (invalid OPENAI_API_KEY) and run. | That engine's rows say "Couldn't check: …". The rates use only answers received, and history shows "(+N failed)". |
+| MON-8 | Activate more than 20 prompts. | Clear message about the 20-prompt limit. The button is disabled. |
+| MON-9 | Phone width (390 px). | Tiles are 2 per row, the chart fits, and the history table scrolls inside its card. |
+
 ## Security
 
 | ID | Steps | Expected |

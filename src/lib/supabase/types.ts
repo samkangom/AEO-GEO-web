@@ -56,6 +56,10 @@ export type EngineResult = {
   model_version: string | null;
   web_search_used: boolean | null;
   sampled_at: string;
+  /** Set when the engine call failed; `mentioned` is then null. */
+  error: string | null;
+  /** URLs the answer cited. */
+  citations: string[];
 };
 
 export type Database = {
