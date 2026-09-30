@@ -101,7 +101,9 @@ Browser ──> Next.js (Vercel)
   - `crawl-access.ts`, `structured-data.ts` and `content-signals.ts` are **pure** scoring functions (HTML/text in, score out), which makes them unit-testable.
   - `safe-fetch.ts` is the only way the audit touches the network (timeouts, size caps, SSRF guard).
   - `types.ts` defines the `breakdown` JSON shape.
-- **`src/config/site.ts`** holds the product name, tagline and colours. Never hardcode the name.
+- **`src/config/site.ts`** holds the product name, tagline, colours and contact email. Never hardcode the name.
+- **`src/config/pricing.ts`** holds the plans, their INR prices and features (features not built yet are marked `soon`). The pricing page, landing page and structured data all read from it.
+- **`src/app/(marketing)/`** has the public landing and pricing pages with their own header and footer. `robots.ts` and `sitemap.ts` sit next to them in `src/app/`.
 - **`supabase/migrations/`** is the schema. `supabase/tests/rls.sql` holds the RLS tests.
 
 ## 5. Rules of the codebase

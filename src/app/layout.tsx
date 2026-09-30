@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
+import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: siteConfig.name, template: `%s · ${siteConfig.name}` },
   description: siteConfig.description,
+  metadataBase: new URL(siteUrl()),
+  openGraph: { siteName: siteConfig.name, locale: "en_IN", type: "website" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

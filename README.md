@@ -2,7 +2,7 @@
 
 AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude, Gemini and Perplexity mention and recommend your brand, and fix it when they don't.
 
-> The product name lives in one place, `src/config/site.ts`, together with the colour palette that Tailwind reads.
+> The product name lives in one place, `src/config/site.ts`, together with the colour palette that Tailwind reads and the contact email used by every "Contact us" button (currently a placeholder, `hello@clearcite.in`). Plans and INR prices live in `src/config/pricing.ts`.
 
 ## Status
 
@@ -14,8 +14,8 @@ AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude,
 | 4 | AI provider adapter (OpenAI + Anthropic) + Claude prompt engine → live-visibility check | ✅ |
 | 5 | Manual monitor run + engine_results + history | ✅ |
 | 6 | Dashboard polish, charts, Prompts / Monitor / Ads tabs | ✅ |
-| 7 | Static INR pricing page + landing page | ⏳ next |
-| 8 | Seed/demo data + `MOCK_AI_RESPONSES` mode | — |
+| 7 | Static INR pricing page + landing page | ✅ |
+| 8 | Seed/demo data + `MOCK_AI_RESPONSES` mode | ⏳ next |
 
 Without AI keys, the audit's **Live AI visibility** category (40 pts) is reported as *not configured*. It scores 0 and the UI says so. It is never estimated.
 

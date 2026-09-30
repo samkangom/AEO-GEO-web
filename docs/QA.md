@@ -15,6 +15,19 @@ Manual checks for each release, grouped by feature. The ID goes in bug reports a
 
 These scores assume **no AI keys**, which makes Live AI visibility "Not configured" with "—" and no score. With keys set, the live check really asks ChatGPT and Claude about each fixture brand. The brands are fictional, so expect ~0 live points and roughly a minute per audit.
 
+## Marketing pages
+
+| ID | Steps | Expected |
+| --- | --- | --- |
+| MKT-1 (auto) | Open `/`. | Hero, How it works, What we check (40/25/20/15 pts, which is the real scoring model), Built for India, plans, FAQ, final CTA. Every "Start free audit" goes to /signup. |
+| MKT-2 (auto) | Open `/pricing`. | Four plans: Free Audit ₹0, Starter ₹1,999, Growth ₹7,999, Agency ₹29,999, with "+ 18% GST" on paid plans. Features not built yet show "Coming soon". |
+| MKT-3 (auto) | Click "Contact us" / "Contact sales". | Opens an email to the contact address with the plan name in the subject and a short form in the body. There is no payment form anywhere. |
+| MKT-4 | Header at phone width (390 px). | Logo, Pricing, Log in and "Free audit" all fit. No horizontal scroll. |
+| MKT-5 | The FAQ items on both pages. | Each opens and closes, by keyboard too (Tab to it, then Enter). |
+| MKT-6 (auto) | `/robots.txt` and `/sitemap.xml`. | Marketing pages are allowed. `/dashboard`, `/onboarding`, `/api` and `/auth` are disallowed. The sitemap lists `/`, `/pricing`, `/signup` and `/login`, using NEXT_PUBLIC_SITE_URL when set. |
+| MKT-7 | Dogfood: `AUDIT_ALLOW_PRIVATE_HOSTS=1 npm run audit -- http://127.0.0.1:3000 --site-only`. | Crawler access 25/25, structured data 20/20, content signals 11/15 (there's no About page). |
+| MKT-8 | Logged in, open `/`, then click "Log in". | Redirected to the dashboard. |
+
 ## Auth
 
 | ID | Steps | Expected |
