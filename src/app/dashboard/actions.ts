@@ -110,8 +110,8 @@ export async function createBrand(_prev: FormState, formData: FormData): Promise
   revalidatePath("/dashboard", "layout");
   redirect(
     audit.error
-      ? `/dashboard/${brand.id}?auditError=${encodeURIComponent(audit.error)}`
-      : `/dashboard/${brand.id}`,
+      ? `/dashboard/${brand.id}/audit?auditError=${encodeURIComponent(audit.error)}`
+      : `/dashboard/${brand.id}/audit`,
   );
 }
 
@@ -119,7 +119,8 @@ export async function runAudit(_prev: FormState, formData: FormData): Promise<Fo
   const brandId = String(formData.get("brandId"));
   const res = await auditBrand(brandId);
   if (res.error) return { error: res.error };
-  revalidatePath(`/dashboard/${brandId}`);
+  // Overview, Audit and Prompts all read the latest audit.
+  revalidatePath(`/dashboard/${brandId}`, "layout");
   return { ok: true };
 }
 

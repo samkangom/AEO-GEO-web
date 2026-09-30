@@ -31,13 +31,13 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 
 | ID | Steps | Expected |
 | --- | --- | --- |
-| BRAND-1 (auto) | On onboarding, enter a name + fixture URL and submit. | The button shows "Checking your site…", then the audit page with a score, in under ~30 s. |
+| BRAND-1 (auto) | On onboarding, enter a name + fixture URL and submit. | The button shows "Checking your site…", then the brand's Audit tab with a score: in under ~30 s without AI keys, up to about a minute with them. |
 | BRAND-2 | Enter URLs like `acme`, `localhost:3000`, `ftp://x.in`, or leave it blank. | Validation message. No brand is created. |
 | BRAND-3 | Enter `example.in` (no https). | Saved as `https://example.in`. |
 | BRAND-4 | Enter a domain that doesn't exist, e.g. `nosuchsite-qa-123.in`. | The brand is created and the audit page says "We couldn't find a website at…". |
 | BRAND-5 (auto) | Add a second brand via the switcher → "Add brand". | Both appear in the switcher, and switching changes the page. |
 | BRAND-6 (auto) | Settings: change the name and industry, then save. | "Saved." The header and switcher update. |
-| BRAND-7 (auto) | Settings: delete a brand, cancel the confirm, then delete and confirm. | Cancel does nothing. Confirm removes the brand and goes to the remaining brand, or to onboarding if none are left. |
+| BRAND-7 (auto) | Settings: delete a brand, cancel the confirm, then delete and confirm. | Cancel does nothing. Confirm removes the brand and goes to the remaining brand (or All brands if 2+ remain, or onboarding if none). |
 | BRAND-8 | Open onboarding when you already have brands. | Redirected to the dashboard. |
 
 ## Audit
@@ -73,6 +73,19 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | PR-4 | "Activate all" / "Deactivate all". | Counts and badges update. |
 | PR-5 (auto) | No Anthropic key. | "Prompt generation is not configured" and the button is disabled. |
 | PR-6 | Activate prompts, then re-run the audit. | The live check prefers active prompts. The prompt text on the audit card matches. |
+
+## Dashboard & navigation
+
+| ID | Steps | Expected |
+| --- | --- | --- |
+| DASH-1 (auto) | Account with one brand: log in. | Lands on that brand's Overview. |
+| DASH-2 (auto) | New brand, no monitor runs yet. | "Get set up" shows 3 steps, with completed ones ticked and struck through. The cards show clear empty states and no zeros. |
+| DASH-3 | Brand with 2+ monitor runs. | Overview shows the score ring, the latest mention rate with "Up/Down N pts since <date>", per-engine rates, the last-run summary and the trend chart. Every "View …" link opens the right page. |
+| DASH-4 (auto) | Add a second brand, then open /dashboard. | "All brands" shows a card per brand with score, mention rate or "Not monitored yet". The switcher has an "All brands" item. |
+| DASH-5 (auto) | Ads tab. | "Coming soon" page. Nothing is purchasable. "Ask about early access" opens an email. |
+| DASH-6 | Phone width: Overview and the tab bar. | The tab bar scrolls sideways, cards stack, and chart date labels don't overlap. |
+| DASH-7 | Open a run detail page. | The Monitor tab stays highlighted. |
+| DASH-8 | Slow network (DevTools → Slow 3G), then switch tabs. | A loading skeleton shows instead of a blank page. |
 
 ## Monitor (needs AI keys and active prompts)
 

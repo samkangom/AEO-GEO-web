@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, LayoutGrid, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,9 @@ export function BrandSwitcher({ brands }: { brands: { id: string; name: string }
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="min-w-0 max-w-[16rem] justify-between">
-          <span className="truncate">{current?.name ?? "Select a brand"}</span>
+          <span className="truncate">
+            {current?.name ?? (brands.length > 1 ? "All brands" : "Select a brand")}
+          </span>
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-navy-300" />
         </Button>
       </DropdownMenuTrigger>
@@ -36,6 +38,13 @@ export function BrandSwitcher({ brands }: { brands: { id: string; name: string }
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
+        {brands.length > 1 && (
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard">
+              <LayoutGrid className="h-4 w-4" /> All brands
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/dashboard/brands/new">
             <Plus className="h-4 w-4" /> Add brand

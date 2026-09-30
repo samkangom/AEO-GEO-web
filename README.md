@@ -13,8 +13,8 @@ AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude,
 | 3 | Audit engine (robots.txt, structured data, content signals) → score card UI | ✅ |
 | 4 | AI provider adapter (OpenAI + Anthropic) + Claude prompt engine → live-visibility check | ✅ |
 | 5 | Manual monitor run + engine_results + history | ✅ |
-| 6 | Dashboard polish, charts, Prompts / Monitor / Ads tabs | ⏳ next |
-| 7 | Static INR pricing page + landing page | — |
+| 6 | Dashboard polish, charts, Prompts / Monitor / Ads tabs | ✅ |
+| 7 | Static INR pricing page + landing page | ⏳ next |
 | 8 | Seed/demo data + `MOCK_AI_RESPONSES` mode | — |
 
 Without AI keys, the audit's **Live AI visibility** category (40 pts) is reported as *not configured*. It scores 0 and the UI says so. It is never estimated.
@@ -90,7 +90,9 @@ src/lib/supabase/           server/browser clients, session middleware, DB types
 src/app/(auth)/             login, signup
 src/app/auth/               OAuth/email callback, sign-out
 src/app/onboarding/         "Add your first brand"
-src/app/dashboard/          brand switcher, per-brand Audit + Settings tabs, server actions
+src/app/dashboard/          all-brands overview; per-brand tabs: Overview, Audit, Prompts,
+                            Monitor (+ run detail), Ads (coming soon), Settings; server actions
+src/components/*/…-view.tsx page views, kept separate from data loading so they can be previewed
 src/app/api/health/         deployment health check
 src/lib/log.ts              structured JSON logging
 supabase/migrations/        SQL schema + RLS

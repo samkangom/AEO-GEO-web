@@ -29,17 +29,18 @@ async function signUp(page: Page, email: string) {
   await expect(page).toHaveURL(/\/onboarding$/);
 }
 
-async function addBrand(page: Page, name: string, url: string) {
+async function addBrand(page: Page, name: string, url: string): Promise<string> {
   await page.getByLabel("Brand name").fill(name);
   await page.getByLabel("Website").fill(url);
   await page.getByRole("button", { name: "Add brand & run free audit" }).click();
-  await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]{36}$/, { timeout: 45_000 });
+  // A new brand lands on its audit results.
+  await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]{36}\/audit$/, { timeout: 45_000 });
+  return page.url().replace(/\/audit$/, "");
 }
 
 test("sign up, add a brand, and get an audit score", async ({ page }) => {
   await signUp(page, userA);
-  await addBrand(page, "Kiranabooks", WELL_OPTIMISED);
-  firstBrandUrl = page.url();
+  firstBrandUrl = await addBrand(page, "Kiranabooks", WELL_OPTIMISED);
 
   await expect(page.getByRole("heading", { name: "Kiranabooks" })).toBeVisible();
   if (!AI_KEYS) {
@@ -48,6 +49,17 @@ test("sign up, add a brand, and get an audit score", async ({ page }) => {
     await expect(page.getByText("40 of 100 points weren't measured")).toBeVisible();
     await expect(page.getByText(/^Not configured$/)).toBeVisible();
   }
+});
+
+test("overview shows the setup checklist and the Ads placeholder", async ({ page }) => {
+  await logIn(page, userA);
+  // A single-brand account goes straight to that brand's overview.
+  await expect(page).toHaveURL(firstBrandUrl);
+  await expect(page.getByText("Get set up")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Run your free AI-readiness audit/ })).toBeVisible();
+  await expect(page.getByText("AI-readiness score")).toBeVisible();
+  await page.getByRole("link", { name: /^Ads/ }).click();
+  await expect(page.getByText("Coming soon")).toBeVisible();
 });
 
 test("prompts tab explains when Claude isn't configured", async ({ page }) => {
@@ -69,7 +81,7 @@ test("monitor tab explains what's needed before a run", async ({ page }) => {
 
 test("re-run audit adds history", async ({ page }) => {
   await logIn(page, userA);
-  await page.goto(firstBrandUrl);
+  await page.goto(`${firstBrandUrl}/audit`);
   await page.getByRole("button", { name: "Run audit again" }).click();
   await expect(page.getByText("Audit history")).toBeVisible({ timeout: 45_000 });
 });
@@ -77,13 +89,18 @@ test("re-run audit adds history", async ({ page }) => {
 test("multiple brands and the switcher", async ({ page }) => {
   await logIn(page, userA);
   await page.goto("/dashboard/brands/new");
-  await addBrand(page, "Sharma Pumps", MINIMAL);
+  secondBrandUrl = await addBrand(page, "Sharma Pumps", MINIMAL);
   if (!AI_KEYS) await expect(page.getByRole("img", { name: "Score 42 out of 100" })).toBeVisible();
-  secondBrandUrl = page.url();
 
   await page.getByRole("button", { name: "Sharma Pumps" }).click();
   await page.getByRole("menuitem", { name: "Kiranabooks" }).click();
   await expect(page).toHaveURL(firstBrandUrl);
+
+  // With two brands, /dashboard is the agency overview.
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { name: "All brands" })).toBeVisible();
+  await page.getByRole("link", { name: /Sharma Pumps/ }).click();
+  await expect(page).toHaveURL(secondBrandUrl);
 });
 
 test("edit and delete a brand", async ({ page }) => {

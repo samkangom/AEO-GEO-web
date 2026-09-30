@@ -32,6 +32,6 @@ export async function runMonitorNow(_prev: FormState, formData: FormData): Promi
   }
   if ("error" in result) return { error: result.error };
 
-  revalidatePath(`/dashboard/${brandId}/monitor`);
+  revalidatePath(`/dashboard/${brandId}`, "layout");
   redirect(`/dashboard/${brandId}/monitor/${result.runId}`);
 }

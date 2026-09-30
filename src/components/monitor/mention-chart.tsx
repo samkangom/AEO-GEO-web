@@ -3,13 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { siteConfig } from "@/config/site";
 import type { EngineId } from "@/lib/engines/types";
-
-export type ChartPoint = {
-  date: string;
-  /** Mention rate 0–1 per engine; null = no answers from that engine in this run. */
-  rates: Partial<Record<EngineId, number | null>>;
-  measured: Partial<Record<EngineId, number>>;
-};
+import type { ChartPoint } from "@/lib/monitor/chart";
 
 const LABELS: Record<EngineId, string> = {
   openai: "ChatGPT",
@@ -72,14 +66,17 @@ export function MentionChart({ points, engines }: { points: ChartPoint[]; engine
     [engines, points],
   );
 
+  // As many date labels as fit (~72px each), always including the first and last run.
+  const maxTicks = Math.max(2, Math.floor(innerW / 72));
   const xTicks =
-    points.length <= 6
+    points.length <= maxTicks
       ? points.map((_, i) => i)
       : [
-          0,
-          Math.round((points.length - 1) / 3),
-          Math.round((2 * (points.length - 1)) / 3),
-          points.length - 1,
+          ...new Set(
+            Array.from({ length: maxTicks }, (_, k) =>
+              Math.round((k * (points.length - 1)) / (maxTicks - 1)),
+            ),
+          ),
         ];
 
   function nearest(clientX: number) {

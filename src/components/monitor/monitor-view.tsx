@@ -5,7 +5,8 @@ import type { EngineId } from "@/lib/engines/types";
 import type { RunWithStats } from "@/lib/monitor/store";
 import { formatRate } from "@/lib/monitor/stats";
 import { formatDate } from "@/lib/utils";
-import { MentionChart, type ChartPoint } from "./mention-chart";
+import { mentionTrend } from "@/lib/monitor/chart";
+import { MentionChart } from "./mention-chart";
 import { RunMonitorButton } from "./run-monitor-button";
 import { RunStatusBadge } from "./run-status-badge";
 import { StatTile } from "./stat-tile";
@@ -36,15 +37,7 @@ export function MonitorView({
   runs,
 }: MonitorViewProps) {
   const latest = runs.find((r) => r.stats.overall.measured > 0);
-  const chartRuns = [...runs].reverse().filter((r) => r.stats.overall.measured > 0);
-  const chartEngines = engines.length
-    ? engines
-    : ([...new Set(chartRuns.flatMap((r) => Object.keys(r.stats.perEngine)))] as EngineId[]);
-  const points: ChartPoint[] = chartRuns.map((r) => ({
-    date: r.started_at,
-    rates: Object.fromEntries(chartEngines.map((e) => [e, r.stats.perEngine[e]?.rate ?? null])),
-    measured: Object.fromEntries(chartEngines.map((e) => [e, r.stats.perEngine[e]?.measured ?? 0])),
-  }));
+  const { engines: chartEngines, points } = mentionTrend(runs, engines);
 
   const calls = activePrompts * engines.length;
   const blocker = !engines.length
