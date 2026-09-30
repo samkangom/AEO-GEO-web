@@ -24,7 +24,13 @@ export function ScoreRing({
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(1, score / max));
   return (
-    <svg viewBox="0 0 120 120" width={size} height={size} role="img" aria-label={`Score ${score} out of ${max}`}>
+    <svg
+      viewBox="0 0 120 120"
+      width={size}
+      height={size}
+      role="img"
+      aria-label={`Score ${score} out of ${max}`}
+    >
       <circle cx="60" cy="60" r={r} fill="none" strokeWidth="10" className="stroke-navy-50" />
       <circle
         cx="60"
@@ -55,7 +61,15 @@ export function unmeasuredPoints(breakdown: AuditBreakdown) {
 }
 
 /** Headline judged against the points we could actually measure. */
-export function ScoreHeadline({ score, measuredMax, className }: { score: number; measuredMax: number; className?: string }) {
+export function ScoreHeadline({
+  score,
+  measuredMax,
+  className,
+}: {
+  score: number;
+  measuredMax: number;
+  className?: string;
+}) {
   const tone = scoreTone(score, measuredMax);
   const text =
     tone === "good"

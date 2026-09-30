@@ -10,11 +10,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen">
       <header className="border-b border-navy-100 bg-white">
-        <div className="container flex h-16 items-center gap-4">
-          <Logo href="/dashboard" />
-          <div className="h-6 w-px bg-navy-100" />
+        <div className="container flex h-16 items-center gap-2 sm:gap-4">
+          <Logo href="/dashboard" compact />
+          <div className="hidden h-6 w-px bg-navy-100 sm:block" />
           <BrandSwitcher brands={brands.map(({ id, name }) => ({ id, name }))} />
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-3">
             <span className="hidden text-sm text-navy-400 sm:inline">{user?.email}</span>
             <form action="/auth/signout" method="post">
               <Button variant="ghost" size="sm" type="submit">

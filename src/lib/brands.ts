@@ -5,10 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 /** All brands for the signed-in user (RLS scopes the query). */
 export async function listBrands() {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("brands")
-    .select("*")
-    .order("created_at", { ascending: true });
+  const { data, error } = await supabase.from("brands").select("*").order("created_at", { ascending: true });
   if (error) throw error;
   return data;
 }

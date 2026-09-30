@@ -13,7 +13,14 @@ export function BrandForm() {
     <form action={action} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">Brand name</Label>
-        <Input id="name" name="name" placeholder="e.g. Acme Billing" required maxLength={120} disabled={pending} />
+        <Input
+          id="name"
+          name="name"
+          placeholder="e.g. Acme Billing"
+          required
+          maxLength={120}
+          disabled={pending}
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="url">Website</Label>

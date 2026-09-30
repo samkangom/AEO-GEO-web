@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AuditError, runSiteAudit } from "@/lib/audit";
+import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 import { normaliseSiteUrl } from "@/lib/url";
@@ -49,12 +50,16 @@ async function auditBrand(brandId: string): Promise<{ error?: string }> {
   const { data: brand } = await supabase.from("brands").select("id, url").eq("id", brandId).maybeSingle();
   if (!brand) return { error: "Brand not found." };
 
+  const started = Date.now();
   let result;
   try {
     result = await runSiteAudit(brand.url);
   } catch (e) {
-    if (e instanceof AuditError) return { error: e.message };
-    console.error("Audit failed", e);
+    if (e instanceof AuditError) {
+      log.warn("audit.site_unreachable", { brandId, url: brand.url, reason: e.message });
+      return { error: e.message };
+    }
+    log.error("audit.failed", e, { brandId, url: brand.url });
     return { error: "The audit failed unexpectedly. Please try again." };
   }
 
@@ -64,9 +69,15 @@ async function auditBrand(brandId: string): Promise<{ error?: string }> {
     breakdown: result.breakdown as unknown as Json,
   });
   if (error) {
-    console.error("Saving audit failed", error);
+    log.error("audit.save_failed", error, { brandId });
     return { error: "We ran the audit but couldn't save it. Please try again." };
   }
+  log.info("audit.completed", {
+    brandId,
+    score: result.overallScore,
+    statuses: Object.fromEntries(Object.entries(result.breakdown).map(([k, v]) => [k, v.status])),
+    ms: Date.now() - started,
+  });
   return {};
 }
 
@@ -85,7 +96,7 @@ export async function createBrand(_prev: FormState, formData: FormData): Promise
     .select("id")
     .single();
   if (error || !brand) {
-    console.error("Creating brand failed", error);
+    log.error("brand.create_failed", error, { userId: user.id });
     return { error: "We couldn't save your brand. Please try again." };
   }
 
@@ -116,12 +127,11 @@ export async function updateBrand(_prev: FormState, formData: FormData): Promise
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { supabase } = await requireUser();
-  const { data, error } = await supabase
-    .from("brands")
-    .update(parsed.data)
-    .eq("id", brandId)
-    .select("id");
-  if (error || !data?.length) return { error: "We couldn't save your changes." };
+  const { data, error } = await supabase.from("brands").update(parsed.data).eq("id", brandId).select("id");
+  if (error || !data?.length) {
+    if (error) log.error("brand.update_failed", error, { brandId });
+    return { error: "We couldn't save your changes." };
+  }
   revalidatePath("/dashboard", "layout");
   return { ok: true };
 }
@@ -129,7 +139,8 @@ export async function updateBrand(_prev: FormState, formData: FormData): Promise
 export async function deleteBrand(formData: FormData) {
   const brandId = String(formData.get("brandId"));
   const { supabase } = await requireUser();
-  await supabase.from("brands").delete().eq("id", brandId);
+  const { error } = await supabase.from("brands").delete().eq("id", brandId);
+  if (error) log.error("brand.delete_failed", error, { brandId });
   revalidatePath("/dashboard", "layout");
   redirect("/dashboard");
 }

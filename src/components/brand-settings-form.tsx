@@ -23,7 +23,8 @@ export function BrandSettingsForm({ brand }: { brand: Brand }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="industry">
-          Industry <span className="font-normal text-navy-300">(optional — helps generate better prompts)</span>
+          Industry{" "}
+          <span className="font-normal text-navy-300">(optional — helps generate better prompts)</span>
         </Label>
         <Input
           id="industry"

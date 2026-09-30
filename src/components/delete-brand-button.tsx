@@ -8,7 +8,11 @@ export function DeleteBrandButton({ brandId, brandName }: { brandId: string; bra
     <form
       action={deleteBrand}
       onSubmit={(e) => {
-        if (!confirm(`Delete ${brandName} and all its audits, prompts and monitor history? This can't be undone.`)) {
+        if (
+          !confirm(
+            `Delete ${brandName} and all its audits, prompts and monitor history? This can't be undone.`,
+          )
+        ) {
           e.preventDefault();
         }
       }}

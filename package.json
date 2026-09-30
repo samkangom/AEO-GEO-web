@@ -8,7 +8,17 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/**/*.test.ts"
+    "test": "tsx --test \"src/**/*.test.ts\" \"test/**/*.test.ts\"",
+    "audit": "tsx scripts/audit.ts",
+    "fixtures": "tsx scripts/fixtures.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:e2e": "playwright test",
+    "test:db": "psql \"${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}\" -X -f supabase/tests/rls.sql",
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm test",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/types.ts"
   },
   "engines": {
     "node": ">=20"
@@ -32,6 +42,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
+    "@playwright/test": "^1.56.1",
     "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -39,6 +50,8 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.26",
     "postcss": "^8.5.28",
+    "prettier": "^3.9.9",
+    "supabase": "^2.118.0",
     "tailwindcss": "^3.4.19",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"

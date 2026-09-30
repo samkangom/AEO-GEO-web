@@ -1,8 +1,4 @@
-export type CategoryKey =
-  | "crawl_access"
-  | "structured_data"
-  | "content_signals"
-  | "live_visibility";
+export type CategoryKey = "crawl_access" | "structured_data" | "content_signals" | "live_visibility";
 
 export type CategoryStatus =
   /** Check ran; score is real. */

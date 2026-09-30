@@ -6,3 +6,7 @@ out
 next-env.d.ts
 *.tsbuildinfo
 .vercel
+playwright-report
+test-results
+supabase/.temp
+supabase/.branches

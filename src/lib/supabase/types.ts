@@ -64,16 +64,8 @@ export type Database = {
       profiles: Table<Profile, "id", "company_name" | "created_at">;
       brands: Table<Brand, "user_id" | "name" | "url", "id" | "industry" | "created_at">;
       audits: Table<Audit, "brand_id" | "overall_score" | "breakdown", "id" | "created_at">;
-      prompts: Table<
-        Prompt,
-        "brand_id" | "text" | "language" | "intent",
-        "id" | "active" | "created_at"
-      >;
-      monitor_runs: Table<
-        MonitorRun,
-        "brand_id",
-        "id" | "status" | "started_at" | "finished_at"
-      >;
+      prompts: Table<Prompt, "brand_id" | "text" | "language" | "intent", "id" | "active" | "created_at">;
+      monitor_runs: Table<MonitorRun, "brand_id", "id" | "status" | "started_at" | "finished_at">;
       engine_results: Table<
         EngineResult,
         "run_id" | "prompt_id" | "engine",

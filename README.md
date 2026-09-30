@@ -19,27 +19,39 @@ AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude,
 
 Until Sprint 4 lands, the audit's **Live AI visibility** category (40 pts) is reported as *not configured* or *not measured*. It scores 0 and the UI says so. It is never estimated.
 
-## Local setup
+## For engineers & QA
 
-1. **Install:** `npm install` (Node 20+).
-2. **Create a Supabase project** at supabase.com.
-3. **Run the migration.** Either paste `supabase/migrations/20260930000000_init.sql` into the SQL editor, or use `npx supabase link && npx supabase db push`.
-4. **Configure auth** under Authentication → URL Configuration:
-   - Site URL: `http://localhost:3000` (your Vercel URL in production)
-   - Redirect URLs: `http://localhost:3000/auth/callback` and `https://<your-domain>/auth/callback`
-   - For Google, enable the provider under Authentication → Providers → Google with an OAuth client from Google Cloud. The authorised redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`.
-5. **Set environment variables:** `cp .env.example .env.local`, then fill in the Supabase URL and anon key. The service-role key and AI keys aren't used yet.
-6. **Start the app:** `npm run dev`, then open http://localhost:3000.
+- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: local setup with Docker Supabase, scripts, the test suites, debugging, architecture, and codebase rules.
+- **[docs/QA.md](docs/QA.md)**: the manual test plan with IDs, fixture sites with known expected scores, and how to report bugs.
 
-## Scripts
+Quick start:
 
-- `npm run dev` / `build` / `start`
-- `npm run lint`, `npm run typecheck`
-- `npm test`: unit tests for the audit scoring logic (robots.txt rules, JSON-LD parsing, content detection, URL normalisation)
+```bash
+npm ci
+npm run db:start                 # local Supabase (Docker), applies migrations
+cp .env.example .env.local       # paste the URL + anon key printed above
+npm run dev                      # http://localhost:3000
+npm run check                    # lint, types, format, unit + integration tests
+```
+
+Test layers:
+
+- **Unit:** scoring rules.
+- **Integration:** real audits against local fixture websites, no internet needed.
+- **Database:** RLS tests (`npm run test:db`).
+- **End-to-end:** Playwright (`npm run test:e2e`, full journey with `E2E_FULL=1`).
+
+CI runs all of them on every PR.
 
 ## Deploying to Vercel
 
-Import the repo, then add the same env vars. Audit routes set `maxDuration = 60`, and audits usually take 1 to 5 seconds. Remember to add the production `/auth/callback` URL in Supabase.
+1. Import the repo and add the env vars from `.env.example`.
+2. Run the migration against your Supabase project (`npx supabase link && npx supabase db push`).
+3. In Supabase → Authentication → URL Configuration, set the Site URL and add `https://<your-domain>/auth/callback` to the redirect URLs.
+4. For Google sign-in, enable the provider in Supabase with a Google Cloud OAuth client. Its redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`.
+5. Check `https://<your-domain>/api/health`.
+
+Audit routes set `maxDuration = 60`. Audits usually take 1 to 5 seconds.
 
 ## How the audit scores (0–100)
 
@@ -68,5 +80,12 @@ src/app/(auth)/             login, signup
 src/app/auth/               OAuth/email callback, sign-out
 src/app/onboarding/         "Add your first brand"
 src/app/dashboard/          brand switcher, per-brand Audit + Settings tabs, server actions
+src/app/api/health/         deployment health check
+src/lib/log.ts              structured JSON logging
 supabase/migrations/        SQL schema + RLS
+supabase/tests/rls.sql      RLS tests
+test/                       audit integration tests + fixture websites
+e2e/                        Playwright tests
+scripts/                    audit CLI, fixture-site server
+docs/                       developer guide, QA test plan
 ```

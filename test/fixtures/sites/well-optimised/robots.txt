@@ -1,0 +1,6 @@
+# Training crawler blocked on purpose: must NOT cost points.
+User-agent: GPTBot
+Disallow: /
+
+User-agent: *
+Allow: /

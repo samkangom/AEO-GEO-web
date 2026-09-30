@@ -66,9 +66,16 @@ test("content signals: homepage analysis finds links, prices and meta", () => {
   assert.equal(a.faqOnHomepage, false);
   assert.deepEqual(a.candidates.about[0], { url: `${SITE}/about-us`, linked: true });
   // External FAQ link is ignored; fallbacks are used instead.
-  assert.deepEqual(a.candidates.faq.map((c) => c.linked), [false, false]);
+  assert.deepEqual(
+    a.candidates.faq.map((c) => c.linked),
+    [false, false],
+  );
 
-  const r = scoreContentSignals(a, { about: { url: `${SITE}/about-us`, html: "" }, faq: null, pricing: null });
+  const r = scoreContentSignals(a, {
+    about: { url: `${SITE}/about-us`, html: "" },
+    faq: null,
+    pricing: null,
+  });
   assert.equal(r.score, 4 + 4 + 3);
   assert.match(r.fix ?? "", /FAQ/);
 });

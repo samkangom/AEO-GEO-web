@@ -20,7 +20,7 @@ export function BrandSwitcher({ brands }: { brands: { id: string; name: string }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="max-w-[16rem] justify-between">
+        <Button variant="outline" className="min-w-0 max-w-[16rem] justify-between">
           <span className="truncate">{current?.name ?? "Select a brand"}</span>
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-navy-300" />
         </Button>

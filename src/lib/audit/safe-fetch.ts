@@ -16,7 +16,15 @@ export type FetchResult = {
 
 type Options = { timeoutMs?: number; maxBytes?: number; maxRedirects?: number };
 
-function isPrivateAddress(ip: string): boolean {
+/**
+ * Test/QA escape hatch: lets the audit reach local fixture sites
+ * (`npm run fixtures`). Never honoured in production builds.
+ */
+function allowPrivateHosts() {
+  return process.env.AUDIT_ALLOW_PRIVATE_HOSTS === "1" && process.env.NODE_ENV !== "production";
+}
+
+export function isPrivateAddress(ip: string): boolean {
   if (net.isIPv4(ip)) {
     const [a, b] = ip.split(".").map(Number);
     return (
@@ -50,13 +58,12 @@ async function assertPublicUrl(url: URL) {
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new FetchBlockedError(`Unsupported protocol ${url.protocol}`);
   }
+  if (allowPrivateHosts()) return;
   const host = url.hostname.replace(/^\[|\]$/g, "");
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal")) {
     throw new FetchBlockedError("Local addresses can't be audited");
   }
-  const addresses = net.isIP(host)
-    ? [{ address: host }]
-    : await lookup(host, { all: true, verbatim: true });
+  const addresses = net.isIP(host) ? [{ address: host }] : await lookup(host, { all: true, verbatim: true });
   if (addresses.some((a) => isPrivateAddress(a.address))) {
     throw new FetchBlockedError("Private network addresses can't be audited");
   }

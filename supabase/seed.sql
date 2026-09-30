@@ -1,0 +1,4 @@
+-- Runs after migrations on `supabase db reset` (local only).
+-- Intentionally empty: demo data arrives in Sprint 8. Sign up through the app
+-- locally — email confirmation is disabled in config.toml, and every email
+-- sent by local Auth is viewable in Mailpit at http://127.0.0.1:54324.

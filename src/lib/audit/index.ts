@@ -1,4 +1,10 @@
-import { scoreContentSignals, analyzeHomepage, confirmsPage, type FoundPages, type PageKind } from "./content-signals";
+import {
+  scoreContentSignals,
+  analyzeHomepage,
+  confirmsPage,
+  type FoundPages,
+  type PageKind,
+} from "./content-signals";
 import { scoreCrawlAccess, type RobotsFetch } from "./crawl-access";
 import { checkLiveVisibility } from "./live-visibility";
 import { FetchBlockedError, safeFetch } from "./safe-fetch";
@@ -61,7 +67,9 @@ export async function runSiteAudit(siteUrl: string): Promise<SiteAuditResult> {
     const err = e as { code?: string; cause?: { code?: string } };
     const code = err?.code ?? err?.cause?.code;
     if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
-      throw new AuditError(`We couldn't find a website at ${new URL(siteUrl).host}. Check the address and try again.`);
+      throw new AuditError(
+        `We couldn't find a website at ${new URL(siteUrl).host}. Check the address and try again.`,
+      );
     }
     if (e instanceof Error && e.name === "TimeoutError") {
       throw new AuditError(`${siteUrl} took too long to respond. Try again in a minute.`);

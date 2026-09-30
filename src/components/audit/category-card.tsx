@@ -12,9 +12,7 @@ function StatusBadge({ result }: { result: CategoryResult }) {
   if (result.status === "not_run") return <Badge variant="muted">Not measured</Badge>;
   if (result.status === "error") return <Badge variant="bad">Couldn&apos;t check</Badge>;
   const tone = scoreTone(result.score, result.max);
-  return (
-    <Badge variant={tone}>{tone === "good" ? "Good" : tone === "warn" ? "Needs work" : "Weak"}</Badge>
-  );
+  return <Badge variant={tone}>{tone === "good" ? "Good" : tone === "warn" ? "Needs work" : "Weak"}</Badge>;
 }
 
 export function CategoryCard({ category, result }: { category: CategoryKey; result: CategoryResult }) {
@@ -34,7 +32,10 @@ export function CategoryCard({ category, result }: { category: CategoryKey; resu
         </div>
         {measured && (
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-navy-50">
-            <div className={cn("h-full rounded-full", BAR[tone])} style={{ width: `${(result.score / result.max) * 100}%` }} />
+            <div
+              className={cn("h-full rounded-full", BAR[tone])}
+              style={{ width: `${(result.score / result.max) * 100}%` }}
+            />
           </div>
         )}
         <p className="text-sm text-navy-600">{result.summary}</p>
@@ -54,7 +55,9 @@ export function CategoryCard({ category, result }: { category: CategoryKey; resu
                 )}
                 <span>
                   {c.label}
-                  {c.note && <span className="block text-xs [overflow-wrap:anywhere] text-navy-400">{c.note}</span>}
+                  {c.note && (
+                    <span className="block text-xs [overflow-wrap:anywhere] text-navy-400">{c.note}</span>
+                  )}
                 </span>
               </li>
             ))}

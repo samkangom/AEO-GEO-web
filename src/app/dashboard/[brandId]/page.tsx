@@ -39,8 +39,8 @@ export default async function AuditPage({
         <CardHeader>
           <CardTitle>Get your AI-readiness score</CardTitle>
           <p className="text-sm text-navy-400">
-            We&apos;ll check whether AI crawlers can reach {brand.name}&apos;s site, whether it describes your business in a
-            way AI understands, and whether it answers the questions buyers ask.
+            We&apos;ll check whether AI crawlers can reach {brand.name}&apos;s site, whether it describes your
+            business in a way AI understands, and whether it answers the questions buyers ask.
           </p>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-3">
@@ -65,8 +65,8 @@ export default async function AuditPage({
             <ScoreHeadline score={latest.overall_score} measuredMax={measuredMax} />
             {unmeasured > 0 && (
               <p className="text-sm text-navy-400">
-                {unmeasured} of 100 points weren&apos;t measured in this audit (see below), so your score is out of the{" "}
-                {measuredMax} points we could check.
+                {unmeasured} of 100 points weren&apos;t measured in this audit (see below), so your score is
+                out of the {measuredMax} points we could check.
               </p>
             )}
             <p className="text-xs text-navy-300">Last audited {formatDate(latest.created_at)}</p>

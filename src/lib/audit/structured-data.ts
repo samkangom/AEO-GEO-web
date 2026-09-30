@@ -135,8 +135,7 @@ export function scoreStructuredData(homepage: PageHtml, faqPage: PageHtml | null
     fix =
       "Add Product or Service schema describing what you sell — name, short description and, ideally, a starting price in ₹.";
   } else if (!hasFaq) {
-    fix =
-      "Add FAQPage schema to your FAQ section so AI answers can quote your answers directly.";
+    fix = "Add FAQPage schema to your FAQ section so AI answers can quote your answers directly.";
   }
 
   return {

@@ -23,7 +23,9 @@ export default async function BrandSettingsPage({ params }: { params: Promise<{ 
       <Card className="border-red-200">
         <CardHeader>
           <CardTitle>Delete brand</CardTitle>
-          <CardDescription>Removes this brand and all of its audits, prompts and monitor history.</CardDescription>
+          <CardDescription>
+            Removes this brand and all of its audits, prompts and monitor history.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <DeleteBrandButton brandId={brand.id} brandName={brand.name} />
