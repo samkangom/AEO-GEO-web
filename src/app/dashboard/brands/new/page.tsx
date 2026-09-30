@@ -3,7 +3,7 @@ import { BrandForm } from "@/components/brand-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Add brand" };
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export default function NewBrandPage() {
   return (

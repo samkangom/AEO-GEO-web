@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { anthropicModel } from "@/lib/engines/anthropic";
+import { openaiModel } from "@/lib/engines/openai";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,7 @@ export async function GET() {
       gemini: env("GEMINI_API_KEY"),
       perplexity: env("PERPLEXITY_API_KEY"),
     },
+    models: { openai: openaiModel(), anthropic: anthropicModel() },
   };
   return NextResponse.json(body, { status: body.ok ? 200 : 503 });
 }

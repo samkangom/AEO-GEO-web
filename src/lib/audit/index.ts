@@ -6,7 +6,9 @@ import {
   type PageKind,
 } from "./content-signals";
 import { scoreCrawlAccess, type RobotsFetch } from "./crawl-access";
-import { checkLiveVisibility } from "./live-visibility";
+import { generatePromptSet } from "@/lib/engines/claude-tasks";
+import type { PromptLike } from "@/lib/prompts/types";
+import { checkLiveVisibility, type LiveVisibilityDeps } from "./live-visibility";
 import { FetchBlockedError, safeFetch } from "./safe-fetch";
 import { scoreStructuredData } from "./structured-data";
 import { CATEGORY_MAX, type AuditBreakdown, type CategoryResult } from "./types";
@@ -51,14 +53,31 @@ function unreachableHomepage(max: number, reason: string, fixTarget: string): Ca
   };
 }
 
-export type SiteAuditResult = { overallScore: number; breakdown: AuditBreakdown };
+export type AuditBrand = { name: string; url: string; industry?: string | null };
+export type SiteInfo = { title: string | null; description: string | null };
+export type AuditResult = { overallScore: number; breakdown: AuditBreakdown };
+
+export type AuditOptions = {
+  /**
+   * Supplies the prompts for the live check. The app passes a DB-backed
+   * version (reuse saved prompts, else generate and save); by default a fresh
+   * set is generated and discarded (CLI).
+   */
+  preparePrompts?: (site: SiteInfo) => Promise<PromptLike[]>;
+  /** Test seam for the AI engines. */
+  engines?: LiveVisibilityDeps;
+};
+
+type SiteChecks = Pick<AuditBreakdown, "crawl_access" | "structured_data" | "content_signals"> & {
+  site: SiteInfo;
+};
 
 /**
- * Runs all four audit checks against a brand's website.
+ * Crawl access, structured data and content signals.
  * Throws AuditError only when the site can't be reached at all (bad domain etc.);
  * HTTP-level failures are recorded in the breakdown instead.
  */
-export async function runSiteAudit(siteUrl: string): Promise<SiteAuditResult> {
+async function runSiteChecks(siteUrl: string): Promise<SiteChecks> {
   const origin = new URL(siteUrl).origin;
 
   const homepagePromise = safeFetch(siteUrl, { timeoutMs: 12_000 }).catch((e: unknown) => {
@@ -77,14 +96,11 @@ export async function runSiteAudit(siteUrl: string): Promise<SiteAuditResult> {
     throw new AuditError(`We couldn't connect to ${siteUrl}. Check the address and try again.`);
   });
 
-  const [robots, homepage, liveVisibility] = await Promise.all([
-    fetchRobots(origin),
-    homepagePromise,
-    checkLiveVisibility(),
-  ]);
+  const [robots, homepage] = await Promise.all([fetchRobots(origin), homepagePromise]);
 
   let structuredData: CategoryResult;
   let contentSignals: CategoryResult;
+  let site: SiteInfo = { title: null, description: null };
 
   if (!homepage.ok || !homepage.contentType.includes("html")) {
     const reason = homepage.ok ? "it didn't return a web page" : `HTTP ${homepage.status}`;
@@ -100,14 +116,29 @@ export async function runSiteAudit(siteUrl: string): Promise<SiteAuditResult> {
     const found: FoundPages = { about, faq, pricing };
     structuredData = scoreStructuredData({ url: homepage.finalUrl, html: homepage.text }, faq);
     contentSignals = scoreContentSignals(analysis, found);
+    site = { title: analysis.title, description: analysis.metaDescription };
   }
 
-  const breakdown: AuditBreakdown = {
+  return {
     crawl_access: scoreCrawlAccess(siteUrl, robots),
     structured_data: structuredData,
     content_signals: contentSignals,
-    live_visibility: liveVisibility,
+    site,
   };
+}
+
+/** Runs all four audit checks for a brand. */
+export async function runAudit(brand: AuditBrand, opts: AuditOptions = {}): Promise<AuditResult> {
+  const { site, ...siteChecks } = await runSiteChecks(brand.url);
+
+  const preparePrompts =
+    opts.preparePrompts ??
+    (async (info: SiteInfo) =>
+      (await generatePromptSet({ ...brand, siteTitle: info.title, siteDescription: info.description }))
+        .prompts);
+  const liveVisibility = await checkLiveVisibility(brand, () => preparePrompts(site), opts.engines);
+
+  const breakdown: AuditBreakdown = { ...siteChecks, live_visibility: liveVisibility };
   const overallScore = Object.values(breakdown).reduce((sum, c) => sum + c.score, 0);
   return { overallScore, breakdown };
 }

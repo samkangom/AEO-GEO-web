@@ -14,6 +14,8 @@ const password = "e2e-password-123";
 const run = Date.now();
 const userA = `qa-a-${run}@example.com`;
 const userB = `qa-b-${run}@example.com`;
+// With real AI keys the live check runs, so exact scores aren't asserted.
+const AI_KEYS = !!(process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY);
 let firstBrandUrl = "";
 let secondBrandUrl = "";
 
@@ -40,10 +42,20 @@ test("sign up, add a brand, and get an audit score", async ({ page }) => {
   firstBrandUrl = page.url();
 
   await expect(page.getByRole("heading", { name: "Kiranabooks" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Score 60 out of 100" })).toBeVisible();
-  await expect(page.getByText("40 of 100 points weren't measured")).toBeVisible();
-  // "Not measured" when AI keys are set: live visibility arrives in Sprint 4.
-  await expect(page.getByText(/^Not (configured|measured)$/)).toBeVisible();
+  if (!AI_KEYS) {
+    // Without AI keys the live check is reported as not configured, never estimated.
+    await expect(page.getByRole("img", { name: "Score 60 out of 100" })).toBeVisible();
+    await expect(page.getByText("40 of 100 points weren't measured")).toBeVisible();
+    await expect(page.getByText(/^Not configured$/)).toBeVisible();
+  }
+});
+
+test("prompts tab explains when Claude isn't configured", async ({ page }) => {
+  test.skip(!!process.env.ANTHROPIC_API_KEY, "Only meaningful without an Anthropic key");
+  await logIn(page, userA);
+  await page.goto(`${firstBrandUrl}/prompts`);
+  await expect(page.getByText("Prompt generation is not configured")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Generate prompts" })).toBeDisabled();
 });
 
 test("re-run audit adds history", async ({ page }) => {
@@ -57,7 +69,7 @@ test("multiple brands and the switcher", async ({ page }) => {
   await logIn(page, userA);
   await page.goto("/dashboard/brands/new");
   await addBrand(page, "Sharma Pumps", MINIMAL);
-  await expect(page.getByRole("img", { name: "Score 42 out of 100" })).toBeVisible();
+  if (!AI_KEYS) await expect(page.getByRole("img", { name: "Score 42 out of 100" })).toBeVisible();
   secondBrandUrl = page.url();
 
   await page.getByRole("button", { name: "Sharma Pumps" }).click();

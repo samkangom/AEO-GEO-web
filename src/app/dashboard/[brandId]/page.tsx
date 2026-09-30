@@ -10,7 +10,7 @@ import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Audit" };
 // The run-audit server action executes on this route.
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export default async function AuditPage({
   params,

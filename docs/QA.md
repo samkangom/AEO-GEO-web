@@ -13,7 +13,7 @@ Manual checks for each release, grouped by feature. The ID goes in bug reports a
 | blocked-bots | http://127.0.0.1:4001 | **0** | `Disallow: /` for all bots, JavaScript-only page. |
 | server-errors | http://127.0.0.1:4003 | **0**, and cards say "Couldn't check" | robots.txt returns 503, homepage returns 403. |
 
-Until Sprint 4, **Live AI visibility** always shows "Not configured" (no AI keys) or "Not measured" (keys set), with "—" and no score.
+These scores assume **no AI keys**, which makes Live AI visibility "Not configured" with "—" and no score. With keys set, the live check really asks ChatGPT and Claude about each fixture brand. The brands are fictional, so expect ~0 live points and roughly a minute per audit.
 
 ## Auth
 
@@ -52,6 +52,27 @@ Until Sprint 4, **Live AI visibility** always shows "Not configured" (no AI keys
 | AUD-6 | Expand "Technical details" on each card. | Raw JSON is shown. Nothing secret is included. |
 | AUD-7 | Real-site smoke: audit 3 real Indian B2B sites, e.g. razorpay.com, zoho.com/crm, a small local business. | Completes in under ~15 s. The results look plausible when compared to the site's actual robots.txt and page source. |
 | AUD-8 | Mobile width (375 px). | Cards stack and nothing overflows horizontally. Long URLs wrap. |
+
+## Live AI visibility (needs OPENAI_API_KEY and/or ANTHROPIC_API_KEY)
+
+| ID | Steps | Expected |
+| --- | --- | --- |
+| LIVE-1 | Add a real, well-known Indian B2B brand (e.g. a popular SaaS) with both keys set. | The audit finishes in about a minute. The card lists 5 quoted prompts, and each shows ChatGPT and Claude as mentioned / not mentioned, with list position and "links to your site" where true. |
+| LIVE-2 | Open Technical details and read 2 answers. | Each "mentioned" matches the answer text. The model name is recorded and `web_search_used` is true. |
+| LIVE-3 | Set only OPENAI_API_KEY. | Only ChatGPT is checked, and an info line says Claude isn't configured. The Prompts tab says generation isn't configured, and live visibility says a Claude key is needed unless the brand already has prompts. |
+| LIVE-4 | Remove both keys. | "Not configured" with "—", and 40 points listed as not measured. No AI calls are made (confirm there are no `engine.*` log lines). |
+| LIVE-5 | Set an invalid OPENAI_API_KEY. | ChatGPT rows say "couldn't check (OpenAI API key was rejected)". The score uses the Claude answers only. |
+
+## Prompts
+
+| ID | Steps | Expected |
+| --- | --- | --- |
+| PR-1 | After the first audit (with an Anthropic key), open the Prompts tab. | 8 draft prompts grouped by intent: English plus Hindi or Hinglish for each. None contains the brand name. The brand's Industry field has been filled in. |
+| PR-2 | Edit a prompt and save. Then try saving text containing the brand name, then text under 8 characters. | The first saves. The others show a clear error. |
+| PR-3 | Activate one prompt, then "Regenerate drafts". | The active prompt stays. The drafts are replaced with new ones. |
+| PR-4 | "Activate all" / "Deactivate all". | Counts and badges update. |
+| PR-5 (auto) | No Anthropic key. | "Prompt generation is not configured" and the button is disabled. |
+| PR-6 | Activate prompts, then re-run the audit. | The live check prefers active prompts. The prompt text on the audit card matches. |
 
 ## Security
 

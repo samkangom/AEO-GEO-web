@@ -5,7 +5,7 @@
  */
 import assert from "node:assert/strict";
 import { after, before, describe, test } from "node:test";
-import { runSiteAudit } from "@/lib/audit";
+import { runAudit } from "@/lib/audit";
 import { serveSite } from "./fixture-server";
 
 process.env.AUDIT_ALLOW_PRIVATE_HOSTS = "1";
@@ -26,7 +26,7 @@ function withSite(name: string, register: (siteUrl: () => string) => void) {
 
 withSite("well-optimised", (siteUrl) => {
   test("scores full marks on every measurable category", async () => {
-    const { overallScore, breakdown } = await runSiteAudit(siteUrl());
+    const { overallScore, breakdown } = await runAudit({ name: "Fixture Co", url: siteUrl() });
     assert.equal(breakdown.crawl_access.score, 25, "blocking only GPTBot must not cost points");
     assert.equal(breakdown.structured_data.score, 20);
     assert.equal(breakdown.content_signals.score, 15);
@@ -41,7 +41,7 @@ withSite("well-optimised", (siteUrl) => {
 
 withSite("blocked-bots", (siteUrl) => {
   test("scores zero and recommends fixes", async () => {
-    const { overallScore, breakdown } = await runSiteAudit(siteUrl());
+    const { overallScore, breakdown } = await runAudit({ name: "Fixture Co", url: siteUrl() });
     assert.equal(breakdown.crawl_access.score, 0);
     assert.match(breakdown.crawl_access.fix ?? "", /User-agent: Claude-SearchBot/);
     assert.equal(breakdown.structured_data.score, 0);
@@ -53,7 +53,7 @@ withSite("blocked-bots", (siteUrl) => {
 
 withSite("minimal", (siteUrl) => {
   test("missing robots.txt is allowed; homepage prices count", async () => {
-    const { breakdown } = await runSiteAudit(siteUrl());
+    const { breakdown } = await runAudit({ name: "Fixture Co", url: siteUrl() });
     assert.equal(breakdown.crawl_access.score, 25);
     assert.match(String(breakdown.crawl_access.detail.robots_status), /missing \(HTTP 404\)/);
     assert.equal(breakdown.structured_data.score, 10, "LocalBusiness counts as Organization");
@@ -63,10 +63,42 @@ withSite("minimal", (siteUrl) => {
 
 withSite("server-errors", (siteUrl) => {
   test("5xx robots.txt and 403 homepage are reported, not thrown", async () => {
-    const { overallScore, breakdown } = await runSiteAudit(siteUrl());
+    const { overallScore, breakdown } = await runAudit({ name: "Fixture Co", url: siteUrl() });
     assert.equal(breakdown.crawl_access.status, "error");
     assert.equal(breakdown.structured_data.status, "error");
     assert.match(breakdown.structured_data.summary, /HTTP 403/);
     assert.equal(overallScore, 0);
+  });
+});
+
+withSite("well-optimised", (siteUrl) => {
+  test("full audit with (fake) AI engines: site checks + live visibility add up", async () => {
+    let siteSeen: { title: string | null; description: string | null } | null = null;
+    const { overallScore, breakdown } = await runAudit(
+      { name: "Kiranabooks", url: siteUrl() },
+      {
+        preparePrompts: async (site) => {
+          siteSeen = site;
+          return [{ text: "best billing app for kirana stores", intent: "shortlist", language: "en" }];
+        },
+        engines: {
+          configuredEngines: () => ["openai", "anthropic"],
+          queryEngine: async (engine) => ({
+            engine,
+            status: "ok",
+            text: "1. Kiranabooks\n2. Vyapar",
+            citations: [],
+            modelVersion: "fake",
+            webSearchUsed: true,
+            latencyMs: 1,
+          }),
+        },
+      },
+    );
+    assert.equal(breakdown.live_visibility.score, 40);
+    assert.equal(overallScore, 100);
+    // Prompt generation gets the homepage's title and description as context.
+    assert.match(siteSeen!.title ?? "", /Kiranabooks/);
+    assert.match(siteSeen!.description ?? "", /GST billing/);
   });
 });

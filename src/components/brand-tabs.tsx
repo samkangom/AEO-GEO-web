@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 export function BrandTabs({ brandId }: { brandId: string }) {
   const pathname = usePathname();
   const base = `/dashboard/${brandId}`;
-  // Prompts, Monitor history and Ads tabs arrive in Sprints 4–6.
+  // Monitor history and Ads tabs arrive in Sprints 5–6.
   const tabs = [
     { href: base, label: "Audit" },
+    { href: `${base}/prompts`, label: "Prompts" },
     { href: `${base}/settings`, label: "Settings" },
   ];
 

@@ -1,4 +1,4 @@
-import { type AuditBreakdown } from "@/lib/audit/types";
+import type { AuditBreakdown, CategoryKey, CategoryResult } from "@/lib/audit/types";
 import { cn } from "@/lib/utils";
 
 export function scoreTone(score: number, max: number) {
@@ -55,9 +55,19 @@ export function ScoreRing({
 
 /** Points from categories that weren't measured (missing API keys, not run) — shown so the score isn't misread. */
 export function unmeasuredPoints(breakdown: AuditBreakdown) {
-  return Object.values(breakdown)
-    .filter((c) => c.status === "not_configured" || c.status === "not_run")
-    .reduce((sum, c) => sum + c.max, 0);
+  return (Object.keys(breakdown) as CategoryKey[])
+    .filter((k) => !isMeasured(k, breakdown[k]))
+    .reduce((sum, k) => sum + breakdown[k].max, 0);
+}
+
+/**
+ * Whether a category's score is a real measurement. A site-check "error"
+ * (e.g. homepage returns 403) is a genuine finding; a live-visibility "error"
+ * means the AI calls failed, so nothing was measured.
+ */
+export function isMeasured(key: CategoryKey, result: CategoryResult) {
+  if (result.status === "ok") return true;
+  return result.status === "error" && key !== "live_visibility";
 }
 
 /** Headline judged against the points we could actually measure. */

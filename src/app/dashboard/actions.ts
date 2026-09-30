@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { AuditError, runSiteAudit } from "@/lib/audit";
+import { AuditError, runAudit as runFullAudit, type AuditResult } from "@/lib/audit";
 import { log } from "@/lib/log";
+import { ensurePrompts } from "@/lib/prompts/store";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 import { normaliseSiteUrl } from "@/lib/url";
@@ -42,18 +43,23 @@ async function requireUser() {
 }
 
 /**
- * Runs the site audit for a brand and stores it. Ownership is enforced by RLS:
- * the brand lookup returns nothing for other users' brands.
+ * Runs the full audit for a brand and stores it. Ownership is enforced by RLS:
+ * the brand lookup returns nothing for other users' brands. The live check
+ * reuses the brand's saved prompts, or generates and saves a first set.
  */
 async function auditBrand(brandId: string): Promise<{ error?: string }> {
   const { supabase } = await requireUser();
-  const { data: brand } = await supabase.from("brands").select("id, url").eq("id", brandId).maybeSingle();
+  const { data: brand } = await supabase
+    .from("brands")
+    .select("id, name, url, industry")
+    .eq("id", brandId)
+    .maybeSingle();
   if (!brand) return { error: "Brand not found." };
 
   const started = Date.now();
-  let result;
+  let result: AuditResult;
   try {
-    result = await runSiteAudit(brand.url);
+    result = await runFullAudit(brand, { preparePrompts: (site) => ensurePrompts(supabase, brand, site) });
   } catch (e) {
     if (e instanceof AuditError) {
       log.warn("audit.site_unreachable", { brandId, url: brand.url, reason: e.message });

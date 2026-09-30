@@ -28,7 +28,9 @@ export function BrandForm() {
       </div>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <Button type="submit" variant="accent" className="w-full" disabled={pending}>
-        {pending ? "Checking your site… (about 20 seconds)" : "Add brand & run free audit"}
+        {pending
+          ? "Checking your site and asking AI engines… (up to a minute)"
+          : "Add brand & run free audit"}
       </Button>
     </form>
   );

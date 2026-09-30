@@ -1,0 +1,98 @@
+/**
+ * Internal Claude calls (not visibility measurements): generating prompt sets.
+ * Kept inside lib/engines so provider SDKs are only imported here.
+ */
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { z } from "zod";
+import { log } from "@/lib/log";
+import { INTENTS, LANGUAGES, PromptsUnavailableError, type PromptLike } from "@/lib/prompts/types";
+import { mentionsBrand } from "@/lib/visibility/analyze";
+import { anthropicClient, anthropicModel, FALLBACK_BETA } from "./anthropic";
+
+const PromptSetSchema = z.object({
+  industry: z.string().describe("Short category label for the business, e.g. 'GST billing software'"),
+  prompts: z.array(
+    z.object({
+      intent: z.enum(INTENTS),
+      language: z.enum(LANGUAGES),
+      text: z.string(),
+    }),
+  ),
+});
+
+const SYSTEM = `You write the questions that real buyers in India type into AI assistants such as ChatGPT and Claude when they are looking for a product, service or supplier. We use these questions to measure whether AI assistants recommend a given business without being told its name.
+
+Given a business, write questions its potential customers would ask, where a good answer would recommend businesses like it:
+
+- shortlist: asking for the best or top options for their need.
+- comparison: asking how the leading options or alternatives in the category compare, or which suits a specific situation.
+- pricing: asking what options cost or which are affordable, with ₹ amounts or budgets where natural.
+- local: tied to a specific Indian city or region where the business operates or sells. Infer it from the website details; if unclear, use a major metro that fits the category.
+
+For each intent write exactly two questions: one in English (language "en"), and one the way Indian buyers actually type in Hindi — Hinglish in Roman script ("hinglish") or Hindi in Devanagari ("hi"), whichever is more natural for this business's buyers. That is eight questions in total.
+
+Never include the business's own name, brand or website in a question: the point is to see whether the assistant brings it up on its own. Write for the business's real buyers (business decision-makers if it sells to businesses), be specific about the category and use case, and phrase each question the way a person types it: one sentence or two, roughly 8–25 words, no quotation marks or numbering.
+
+Also return a short industry label for the business.`;
+
+export type BrandContext = {
+  name: string;
+  url: string;
+  industry?: string | null;
+  siteTitle?: string | null;
+  siteDescription?: string | null;
+};
+
+export type GeneratedPromptSet = { industry: string; prompts: PromptLike[] };
+
+export async function generatePromptSet(brand: BrandContext): Promise<GeneratedPromptSet> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new PromptsUnavailableError("Prompt generation uses Claude — ANTHROPIC_API_KEY is not set.");
+  }
+
+  const details = [
+    `Business name: ${brand.name}`,
+    `Website: ${brand.url}`,
+    brand.industry && `Industry (from the owner): ${brand.industry}`,
+    brand.siteTitle && `Homepage title: ${brand.siteTitle}`,
+    brand.siteDescription && `Homepage description: ${brand.siteDescription}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const response = await anthropicClient().beta.messages.parse(
+    {
+      model: anthropicModel(),
+      max_tokens: 16000,
+      betas: [FALLBACK_BETA],
+      fallbacks: "default",
+      output_config: { effort: "low", format: betaZodOutputFormat(PromptSetSchema) },
+      system: SYSTEM,
+      messages: [{ role: "user", content: details }],
+    },
+    { timeout: 90_000, maxRetries: 1 },
+  );
+
+  if (response.stop_reason === "refusal" || !response.parsed_output) {
+    throw new Error(`Prompt generation returned no result (stop reason: ${response.stop_reason})`);
+  }
+
+  const { industry, prompts } = response.parsed_output;
+  const seen = new Set<string>();
+  const clean = prompts
+    .map((p) => ({ ...p, text: p.text.trim().replace(/^["“]|["”]$/g, "") }))
+    .filter((p) => {
+      const key = p.text.toLowerCase();
+      if (!p.text || seen.has(key)) return false;
+      seen.add(key);
+      // A prompt naming the brand would make every "mention" meaningless.
+      if (mentionsBrand(p.text, brand)) {
+        log.warn("prompts.dropped_branded", { text: p.text });
+        return false;
+      }
+      return true;
+    });
+
+  log.info("prompts.generated", { brand: brand.url, count: clean.length, model: response.model });
+  return { industry: industry.trim(), prompts: clean };
+}

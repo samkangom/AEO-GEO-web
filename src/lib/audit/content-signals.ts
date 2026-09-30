@@ -34,6 +34,7 @@ function sameSite(a: URL, b: URL) {
 }
 
 export type HomepageAnalysis = {
+  title: string | null;
   metaDescription: string | null;
   faqOnHomepage: boolean;
   pricesOnHomepage: boolean;
@@ -45,6 +46,7 @@ export function analyzeHomepage(html: string, pageUrl: string): HomepageAnalysis
   const $ = cheerio.load(html);
   const base = new URL(pageUrl);
 
+  const title = $("title").first().text().trim() || null;
   const metaDescription =
     $('meta[name="description" i]').attr("content")?.trim() ||
     $('meta[property="og:description"]').attr("content")?.trim() ||
@@ -91,7 +93,7 @@ export function analyzeHomepage(html: string, pageUrl: string): HomepageAnalysis
     }
   }
 
-  return { metaDescription, faqOnHomepage, pricesOnHomepage, candidates };
+  return { title, metaDescription, faqOnHomepage, pricesOnHomepage, candidates };
 }
 
 /**
@@ -184,6 +186,7 @@ export function scoreContentSignals(analysis: HomepageAnalysis, found: FoundPage
     checks,
     fix,
     detail: {
+      homepage_title: analysis.title,
       meta_description: meta,
       about_url: found.about?.url ?? null,
       faq_url: found.faq?.url ?? null,

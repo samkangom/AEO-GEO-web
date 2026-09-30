@@ -13,7 +13,7 @@ export function RunAuditButton({ brandId, label = "Run audit again" }: { brandId
       <input type="hidden" name="brandId" value={brandId} />
       <Button type="submit" variant="accent" disabled={pending}>
         <RefreshCw className={pending ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-        {pending ? "Auditing… (about 20 seconds)" : label}
+        {pending ? "Auditing… (up to a minute)" : label}
       </Button>
       {state?.error && <p className="max-w-sm text-right text-sm text-red-600">{state.error}</p>}
     </form>

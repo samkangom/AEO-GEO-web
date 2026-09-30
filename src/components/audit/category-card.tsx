@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CATEGORY_TITLES, type CategoryKey, type CategoryResult } from "@/lib/audit/types";
 import { cn } from "@/lib/utils";
-import { scoreTone } from "./score-summary";
+import { isMeasured, scoreTone } from "./score-summary";
 
 const BAR = { good: "bg-accent", warn: "bg-amber-500", bad: "bg-red-500" } as const;
 
@@ -16,7 +16,7 @@ function StatusBadge({ result }: { result: CategoryResult }) {
 }
 
 export function CategoryCard({ category, result }: { category: CategoryKey; result: CategoryResult }) {
-  const measured = result.status === "ok" || result.status === "error";
+  const measured = isMeasured(category, result);
   const tone = scoreTone(result.score, result.max);
 
   return (

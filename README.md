@@ -11,13 +11,13 @@ AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude,
 | 1 | Next.js + Supabase scaffold, auth (email/password + Google), DB migration + RLS | ✅ |
 | 2 | Brand CRUD (add, list, switch, edit, delete) | ✅ |
 | 3 | Audit engine (robots.txt, structured data, content signals) → score card UI | ✅ |
-| 4 | AI provider adapter (OpenAI + Anthropic) + Claude prompt engine → live-visibility check | ⏳ next |
-| 5 | Manual monitor run + engine_results + history | — |
+| 4 | AI provider adapter (OpenAI + Anthropic) + Claude prompt engine → live-visibility check | ✅ |
+| 5 | Manual monitor run + engine_results + history | ⏳ next |
 | 6 | Dashboard polish, charts, Prompts / Monitor / Ads tabs | — |
 | 7 | Static INR pricing page + landing page | — |
 | 8 | Seed/demo data + `MOCK_AI_RESPONSES` mode | — |
 
-Until Sprint 4 lands, the audit's **Live AI visibility** category (40 pts) is reported as *not configured* or *not measured*. It scores 0 and the UI says so. It is never estimated.
+Without AI keys, the audit's **Live AI visibility** category (40 pts) is reported as *not configured*. It scores 0 and the UI says so. It is never estimated.
 
 ## For engineers & QA
 
@@ -60,7 +60,7 @@ Audit routes set `maxDuration = 60`. Audits usually take 1 to 5 seconds.
 | AI crawler access | 25 | robots.txt rules for the **answer/search** bots OAI-SearchBot, Claude-SearchBot and PerplexityBot (≈8⅓ pts each). Training bots (GPTBot, ClaudeBot) are reported but never cost points. A missing robots.txt (4xx) counts as allowed. A 5xx or unreachable robots.txt counts as blocked, following RFC 9309. |
 | Structured data | 20 | JSON-LD on the homepage, including `@graph` and nested nodes: Organization or subtypes (10), Product/Service/SoftwareApplication (5), FAQPage on the homepage or FAQ page (5). |
 | Content signals | 15 | About page (4), FAQ content (4), public pricing, either a pricing page or ₹/Rs/INR prices on the homepage (4), and a meta description of at least 50 characters (3). Pages are confirmed from the raw HTML, so a JavaScript-only shell doesn't count. Most AI crawlers don't run JavaScript. |
-| Live AI visibility | 40 | *Sprint 4:* 5 generated prompts × OpenAI + Anthropic with web search. Score = % of pairs that mention the brand. |
+| Live AI visibility | 40 | 5 of the brand's prompts (4 English, one per intent, plus 1 Hindi/Hinglish), each asked to every configured engine (ChatGPT, Claude) with web search, localised to India. Score = 40 × the share of answers that mention the brand. Failed calls are excluded and reported. Each answer, the model that produced it, its citations and its list position are stored in `detail.results`. |
 
 Every weak category shows one plain-language recommended fix. Raw findings are stored in `audits.breakdown[category].detail`.
 
@@ -89,3 +89,16 @@ e2e/                        Playwright tests
 scripts/                    audit CLI, fixture-site server
 docs/                       developer guide, QA test plan
 ```
+
+## AI engines & models
+
+All AI calls go through `src/lib/engines/`. Nothing else imports a provider SDK.
+
+| Use | Provider / model | Notes |
+| --- | --- | --- |
+| Live visibility: ChatGPT | OpenAI Responses API, `gpt-5.5` (override: `OPENAI_MODEL`) | `web_search` tool, user location India, low reasoning effort |
+| Live visibility: Claude | Anthropic Messages API, `claude-opus-5-5` (override: `ANTHROPIC_MODEL`) | `web_search_20260209` tool, user location India, effort `low`. Server-side refusal fallback (`fallbacks: "default"`) is on, and the model that actually answered is recorded. |
+| Prompt generation | Claude, same model | Structured JSON output. Prompts that contain the brand name are dropped. |
+| Gemini, Perplexity | Stubs | Always "not configured" until built |
+
+Rough cost per audit with both keys: one prompt-generation call on a brand's first audit, then 10 web-search answers. Pricing: Claude Opus 5.5 is $4/$20 per million input/output tokens plus web-search fees; OpenAI pricing is per their price list.
