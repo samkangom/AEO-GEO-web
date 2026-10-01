@@ -15,6 +15,7 @@ beforeEach(() => {
   delete env.ANTHROPIC_API_KEY;
   delete env.VERCEL_ENV;
   delete env.NODE_ENV;
+  delete env.ALLOW_MOCK_ON_PRODUCTION;
   env.MOCK_AI_RESPONSES = "1";
 });
 afterEach(() => {
@@ -33,6 +34,13 @@ test("mock mode is never active on the production site", () => {
   assert.equal(isMockMode(), false, "Vercel production never");
   delete env.VERCEL_ENV;
   assert.equal(isMockMode(), false, "any other production build never");
+  env.VERCEL_ENV = "production";
+  env.ALLOW_MOCK_ON_PRODUCTION = "1";
+  assert.equal(isMockMode(), true, "a demo deployment can opt in explicitly with a second flag");
+  env.MOCK_AI_RESPONSES = "";
+  assert.equal(isMockMode(), false, "the second flag alone does nothing");
+  delete env.ALLOW_MOCK_ON_PRODUCTION;
+  delete env.VERCEL_ENV;
   env.NODE_ENV = "development";
   env.MOCK_AI_RESPONSES = "0";
   assert.equal(isMockMode(), false, "off unless the flag is set");
