@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MockBadge } from "@/components/mock-badge";
 import { Plus } from "lucide-react";
 import { ScoreRing } from "@/components/audit/score-summary";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,8 @@ export type BrandSummary = {
   id: string;
   name: string;
   url: string;
-  audit: { score: number; measuredMax: number } | null;
-  mention: { rate: Rate; date: string } | null;
+  audit: { score: number; measuredMax: number; mock?: boolean } | null;
+  mention: { rate: Rate; date: string; mock?: boolean } | null;
 };
 
 /** Agency view: every brand on the account at a glance. */
@@ -50,7 +51,10 @@ export function BrandsGrid({ brands }: { brands: BrandSummary[] }) {
                   </div>
                 )}
                 <div className="min-w-0 flex-1 space-y-1">
-                  <p className="truncate font-semibold text-navy">{b.name}</p>
+                  <p className="flex items-center gap-2 font-semibold text-navy">
+                    <span className="truncate">{b.name}</span>
+                    {(b.audit?.mock || b.mention?.mock) && <MockBadge />}
+                  </p>
                   <p className="truncate text-xs text-navy-400">{displayHost(b.url)}</p>
                   <p className="text-sm text-navy-600">
                     {b.mention ? (

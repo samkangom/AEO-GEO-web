@@ -89,3 +89,8 @@ export function ScoreHeadline({
         : "AI answer engines will struggle to find and recommend you right now.";
   return <p className={cn("text-lg font-medium text-navy", className)}>{text}</p>;
 }
+
+/** True when the audit's live-visibility points came from mock mode. */
+export function isMockAudit(breakdown: AuditBreakdown) {
+  return breakdown.live_visibility?.detail?.mock === true;
+}

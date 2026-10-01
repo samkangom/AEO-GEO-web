@@ -21,9 +21,13 @@ export type EngineAnswer = {
   error?: string;
 };
 
+/** Who the question is about. Real engines never see it; only mock mode uses it. */
+export type QueryContext = { brandName: string; brandUrl?: string; salt?: string };
+
 export type QueryOptions = {
   /** Abort the call after this long. */
   timeoutMs?: number;
+  context?: QueryContext;
 };
 
 export interface EngineAdapter {

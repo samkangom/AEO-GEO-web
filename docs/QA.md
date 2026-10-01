@@ -114,6 +114,17 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | MON-8 | Activate more than 20 prompts. | Clear message about the 20-prompt limit. The button is disabled. |
 | MON-9 | Phone width (390 px). | Tiles are 2 per row, the chart fits, and the history table scrolls inside its card. |
 
+## Mock mode & demo data
+
+| ID | Steps | Expected |
+| --- | --- | --- |
+| MOCK-1 | `npm run seed:demo`, then log in as demo@clearcite.local. | "All brands" shows 2 brands, each with a Mock badge. Each brand has an audit history (2), 8 prompts (4 active) and 6 weekly runs in the chart. |
+| MOCK-2 (auto) | With `MOCK_AI_RESPONSES=1`, add a brand. | An amber "Mock AI mode is on" banner on every dashboard page. The audit's Live AI visibility card and score are badged Mock, and the first line says the answers are simulated. |
+| MOCK-3 (auto) | Mock mode: activate prompts and run the monitor. | The run page says "This run used mock mode". Each answer shows Mock and the `mock-openai` / `mock-anthropic` model, and starts with "[Mock response …]". Only "Example Vendor" placeholder names appear. |
+| MOCK-4 | Turn mock mode off and refresh. | No banner. Old mock runs and audits keep their Mock badges. New runs need real keys or show "not configured". |
+| MOCK-5 | Production build: `MOCK_AI_RESPONSES=1 npm run build && npm start` (not on Vercel). | Mock mode is ignored: no banner, and `/api/health` shows `"mockMode": false`. |
+| MOCK-6 | `npm run seed:demo` against a cloud Supabase URL. | Refuses unless `--allow-remote` is passed. |
+
 ## Security
 
 | ID | Steps | Expected |

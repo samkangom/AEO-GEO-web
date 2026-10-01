@@ -8,7 +8,9 @@ import { z } from "zod";
 import { log } from "@/lib/log";
 import { INTENTS, LANGUAGES, PromptsUnavailableError, type PromptLike } from "@/lib/prompts/types";
 import { mentionsBrand } from "@/lib/visibility/analyze";
+import { isMockMode } from "@/lib/mock-mode";
 import { anthropicClient, anthropicModel, FALLBACK_BETA } from "./anthropic";
+import { mockPromptSet, mockSentiment } from "./mock";
 
 const PromptSetSchema = z.object({
   industry: z.string().describe("Short category label for the business, e.g. 'GST billing software'"),
@@ -46,7 +48,13 @@ export type BrandContext = {
 
 export type GeneratedPromptSet = { industry: string; prompts: PromptLike[] };
 
+/** Whether prompts can be generated right now (Claude configured, or mock mode). */
+export function promptGenerationAvailable() {
+  return isMockMode() || !!process.env.ANTHROPIC_API_KEY;
+}
+
 export async function generatePromptSet(brand: BrandContext): Promise<GeneratedPromptSet> {
+  if (isMockMode()) return mockPromptSet(brand);
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new PromptsUnavailableError("Prompt generation uses Claude — ANTHROPIC_API_KEY is not set.");
   }
@@ -111,6 +119,7 @@ const SentimentSchema = z.object({ sentiment: z.enum(["positive", "neutral", "ne
  * advised against). Returns null when Claude isn't configured.
  */
 export async function classifySentiment(brandName: string, answer: string): Promise<Sentiment | null> {
+  if (isMockMode()) return mockSentiment(brandName, answer);
   if (!process.env.ANTHROPIC_API_KEY) return null;
   const response = await anthropicClient().messages.parse(
     {

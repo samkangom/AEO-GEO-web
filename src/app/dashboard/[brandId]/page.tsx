@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { unmeasuredPoints } from "@/components/audit/score-summary";
+import { isMockAudit, unmeasuredPoints } from "@/components/audit/score-summary";
 import { OverviewView } from "@/components/overview/overview-view";
 import { getBrandOr404 } from "@/lib/brands";
 import type { AuditBreakdown } from "@/lib/audit/types";
@@ -35,6 +35,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ brand
           ? {
               score: audit.overall_score,
               measuredMax: 100 - unmeasuredPoints(audit.breakdown as unknown as AuditBreakdown),
+              mock: isMockAudit(audit.breakdown as unknown as AuditBreakdown),
               createdAt: audit.created_at,
             }
           : null

@@ -3,7 +3,9 @@
  * audit and the monitor call `queryEngine` — never a provider SDK directly —
  * so engines can be added or swapped without touching calling code.
  */
+import { isMockMode } from "@/lib/mock-mode";
 import { anthropicAdapter } from "./anthropic";
+import { mockQuery } from "./mock";
 import { openaiAdapter } from "./openai";
 import {
   notConfigured,
@@ -13,7 +15,7 @@ import {
   type QueryOptions,
 } from "./types";
 
-export type { Citation, EngineAnswer, EngineId } from "./types";
+export type { Citation, EngineAnswer, EngineId, QueryContext } from "./types";
 
 /** Not built yet: always reports "not configured" so no result is ever implied. */
 function stubAdapter(id: EngineId, label: string, envVar: string): EngineAdapter {
@@ -45,9 +47,12 @@ export function engineLabel(id: EngineId) {
 }
 
 export function configuredEngines(ids: EngineId[] = VISIBILITY_ENGINES): EngineId[] {
+  // Mock mode simulates the visibility engines; stubs stay "not configured".
+  if (isMockMode()) return ids.filter((id) => VISIBILITY_ENGINES.includes(id));
   return ids.filter((id) => ENGINES[id].isConfigured());
 }
 
 export function queryEngine(engine: EngineId, prompt: string, opts?: QueryOptions): Promise<EngineAnswer> {
+  if (isMockMode() && VISIBILITY_ENGINES.includes(engine)) return mockQuery(engine, prompt, opts?.context);
   return ENGINES[engine].query(prompt, opts);
 }

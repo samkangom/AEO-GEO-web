@@ -61,6 +61,12 @@ jobs:
         env:
           E2E_FULL: "1"
 
+      - name: Playwright (mock AI mode — prompts, live visibility, monitor)
+        run: npx playwright test e2e/mock-journey.spec.ts
+        env:
+          E2E_FULL: "1"
+          MOCK_AI_RESPONSES: "1"
+
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

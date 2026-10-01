@@ -3,12 +3,15 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { listBrands } from "@/lib/brands";
 import { getUser } from "@/lib/supabase/server";
+import { MockModeBanner } from "@/components/mock-badge";
+import { isMockMode } from "@/lib/mock-mode";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [user, brands] = await Promise.all([getUser(), listBrands()]);
 
   return (
     <div className="min-h-screen">
+      {isMockMode() && <MockModeBanner />}
       <header className="border-b border-navy-100 bg-white">
         <div className="container flex h-16 items-center gap-2 sm:gap-4">
           <Logo href="/dashboard" compact />

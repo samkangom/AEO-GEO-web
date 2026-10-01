@@ -6,6 +6,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 test.skip(!process.env.E2E_FULL, "Set E2E_FULL=1 with Supabase running to run the full journey");
+test.skip(process.env.MOCK_AI_RESPONSES === "1", "Mock mode has its own journey (mock-journey.spec.ts)");
 test.describe.configure({ mode: "serial" });
 
 const WELL_OPTIMISED = "http://127.0.0.1:4004";

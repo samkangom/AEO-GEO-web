@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { unmeasuredPoints } from "@/components/audit/score-summary";
+import { isMockAudit, unmeasuredPoints } from "@/components/audit/score-summary";
 import { BrandsGrid, type BrandSummary } from "@/components/overview/brands-grid";
 import type { AuditBreakdown } from "@/lib/audit/types";
 import { listBrands } from "@/lib/brands";
@@ -37,9 +37,12 @@ export default async function DashboardIndex() {
           ? {
               score: audit.overall_score,
               measuredMax: 100 - unmeasuredPoints(audit.breakdown as unknown as AuditBreakdown),
+              mock: isMockAudit(audit.breakdown as unknown as AuditBreakdown),
             }
           : null,
-        mention: measured ? { rate: measured.stats.overall, date: measured.started_at } : null,
+        mention: measured
+          ? { rate: measured.stats.overall, date: measured.started_at, mock: measured.mock }
+          : null,
       };
     }),
   );

@@ -39,6 +39,7 @@ To work against a cloud Supabase project instead, put that project's URL and ano
 | `npm run test:e2e` | Playwright. Public-page tests always run. Set `E2E_FULL=1` (with local Supabase running) for the full sign-up → brand → audit journey. |
 | `npm run audit -- <url> [--name="Brand"] [--site-only] [--json]` | Run the audit from the terminal. No DB or login needed. Uses keys from `.env.local`: with keys set, it makes real (paid) AI calls; `--site-only` skips them. |
 | `npm run fixtures` | Serve the fixture websites on ports 4001+ for manual QA. |
+| `npm run seed:demo` | Create the demo account (`demo@clearcite.local` / `clearcite-demo-123`) with 2 brands, prompts, audits and 6 weeks of monitor runs, all made in mock mode. Local Supabase only (`--allow-remote` to override); needs `SUPABASE_SERVICE_ROLE_KEY`. Re-running replaces it. |
 | `npm run format` | Prettier. |
 | `npm run db:types` | Regenerate `src/lib/supabase/types.ts` from the local DB after a migration. |
 
@@ -109,7 +110,7 @@ Browser ──> Next.js (Vercel)
 ## 5. Rules of the codebase
 
 1. **RLS is the security boundary.** User-facing code uses the user-scoped client (`lib/supabase/server.ts`). Don't use the service-role key in request paths.
-2. **No fabricated data.** Every AI-visibility number must come from a real API call. When something can't be measured, set the category `status` to `not_configured` / `not_run` / `error` with score 0, and let the UI say so.
+2. **No fabricated data.** Mock mode is the only exception: it's opt-in, never active on the production site, and every simulated result is stored and shown as mock (`mock-` model names, `monitor_runs.mock`, `detail.mock` on audits, the `MockBadge`). Any new screen that shows AI results must show the badge too. Beyond that: Every AI-visibility number must come from a real API call. When something can't be measured, set the category `status` to `not_configured` / `not_run` / `error` with score 0, and let the UI say so.
 3. **AI providers only through the adapter.** Call `queryEngine()` from `src/lib/engines`. Route handlers never import a provider SDK directly. To add an engine, implement `EngineAdapter` (see `openai.ts`), register it in `ENGINES`, add it to `VISIBILITY_ENGINES`, and add a contract test in `test/engines.contract.test.ts`.
 4. **Schema changes:**
    - Add a new migration file (`npx supabase migration new <name>`). Never edit one that's been applied.
@@ -127,6 +128,7 @@ See `.env.example`. Test-only extras:
 | --- | --- |
 | `OPENAI_MODEL` / `ANTHROPIC_MODEL` | Override the default models (`gpt-5.5` / `claude-opus-5-5`). |
 | `AUDIT_ALLOW_PRIVATE_HOSTS=1` | Let the audit fetch local fixture sites. Ignored when `NODE_ENV=production`. |
+| `MOCK_AI_RESPONSES=1` | Simulated AI answers (see README → "Try it without AI keys"). Ignored on the production site. `MOCK_AI_RESPONSES=1 E2E_FULL=1 npx playwright test e2e/mock-journey.spec.ts` runs the AI journey without keys. |
 | `E2E_FULL=1` | Run the full Playwright journey (needs Supabase). |
 | `E2E_PORT` | Port for the e2e dev server (default 3210). |
 | `DATABASE_URL` | Postgres URL for `npm run test:db` (default: local Supabase). |

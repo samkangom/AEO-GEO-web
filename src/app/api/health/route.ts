@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { anthropicModel } from "@/lib/engines/anthropic";
 import { openaiModel } from "@/lib/engines/openai";
+import { isMockMode } from "@/lib/mock-mode";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export async function GET() {
       perplexity: env("PERPLEXITY_API_KEY"),
     },
     models: { openai: openaiModel(), anthropic: anthropicModel() },
+    mockMode: isMockMode(),
   };
   return NextResponse.json(body, { status: body.ok ? 200 : 503 });
 }

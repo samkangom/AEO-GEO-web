@@ -44,6 +44,8 @@ export default defineConfig({
       env: {
         // Lets the app audit the local fixture sites. Ignored in production builds.
         AUDIT_ALLOW_PRIVATE_HOSTS: "1",
+        // `MOCK_AI_RESPONSES=1 npm run test:e2e` runs the app with simulated AI answers.
+        MOCK_AI_RESPONSES: process.env.MOCK_AI_RESPONSES ?? "",
         // Placeholders so public pages render without a database.
         NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321",
         NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder",

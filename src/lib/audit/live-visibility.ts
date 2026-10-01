@@ -7,6 +7,7 @@ import {
   type EngineId,
 } from "@/lib/engines";
 import { log } from "@/lib/log";
+import { isMockModel } from "@/lib/mock-mode";
 import { pickAuditPrompts } from "@/lib/prompts/select";
 import { PromptsUnavailableError, type PromptLike } from "@/lib/prompts/types";
 import { analyzeAnswer, type BrandRef } from "@/lib/visibility/analyze";
@@ -17,10 +18,16 @@ export type LiveVisibilityDeps = {
   queryEngine: (engine: EngineId, prompt: string) => Promise<EngineAnswer>;
 };
 
-const defaultDeps: LiveVisibilityDeps = {
-  configuredEngines: () => defaultConfiguredEngines(),
-  queryEngine: (engine, prompt) => defaultQueryEngine(engine, prompt, { timeoutMs: 90_000 }),
-};
+function defaultDeps(brand: BrandRef): LiveVisibilityDeps {
+  return {
+    configuredEngines: () => defaultConfiguredEngines(),
+    queryEngine: (engine, prompt) =>
+      defaultQueryEngine(engine, prompt, {
+        timeoutMs: 90_000,
+        context: { brandName: brand.name, brandUrl: brand.url },
+      }),
+  };
+}
 
 const MAX_STORED_ANSWER = 6000;
 
@@ -45,7 +52,7 @@ function unmeasured(status: "not_configured" | "error", summary: string, fix: st
 export async function checkLiveVisibility(
   brand: BrandRef,
   preparePrompts: () => Promise<PromptLike[]>,
-  deps: LiveVisibilityDeps = defaultDeps,
+  deps: LiveVisibilityDeps = defaultDeps(brand),
 ): Promise<CategoryResult> {
   const engines = deps.configuredEngines();
   if (engines.length === 0) {
@@ -92,6 +99,7 @@ export async function checkLiveVisibility(
     return { prompt, engine, answer, analysis };
   });
 
+  const mock = answers.some((a) => isMockModel(a.modelVersion));
   const measured = results.filter((r) => r.analysis);
   const mentioned = measured.filter((r) => r.analysis!.mentioned);
 
@@ -129,6 +137,14 @@ export async function checkLiveVisibility(
     };
   });
 
+  if (mock) {
+    checks.unshift({
+      label: "Mock mode: these answers are simulated, not real AI results",
+      passed: null,
+      note: "MOCK_AI_RESPONSES is on. Turn it off and add API keys to measure real visibility.",
+    });
+  }
+
   const missing = VISIBILITY_ENGINES.filter((e) => !engines.includes(e));
   if (missing.length) {
     checks.push({
@@ -162,6 +178,7 @@ export async function checkLiveVisibility(
     checks,
     fix,
     detail: {
+      mock,
       engines,
       per_engine: perEngine,
       answers_measured: measured.length,

@@ -5,7 +5,7 @@ import { PromptRow } from "@/components/prompts/prompt-row";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBrandOr404 } from "@/lib/brands";
-import { ENGINES } from "@/lib/engines";
+import { promptGenerationAvailable } from "@/lib/engines/claude-tasks";
 import { listPrompts } from "@/lib/prompts/store";
 import { INTENTS, INTENT_LABELS } from "@/lib/prompts/types";
 import { createClient } from "@/lib/supabase/server";
@@ -26,7 +26,7 @@ export default async function PromptsPage({ params }: { params: Promise<{ brandI
   const brand = await getBrandOr404(brandId);
   const supabase = await createClient();
   const prompts = await listPrompts(supabase, brand.id);
-  const claudeConfigured = ENGINES.anthropic.isConfigured();
+  const claudeConfigured = promptGenerationAvailable();
   const activeCount = prompts.filter((p) => p.active).length;
 
   return (

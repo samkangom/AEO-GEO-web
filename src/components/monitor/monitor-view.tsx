@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MockBadge } from "@/components/mock-badge";
 import { siteConfig } from "@/config/site";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { EngineId } from "@/lib/engines/types";
@@ -83,8 +84,9 @@ export function MonitorView({
       ) : (
         <>
           <section aria-labelledby="latest-run">
-            <h2 id="latest-run" className="mb-3 text-sm font-medium text-navy-400">
+            <h2 id="latest-run" className="mb-3 flex items-center gap-2 text-sm font-medium text-navy-400">
               Latest run · {formatDate(latest.started_at)}
+              {latest.mock && <MockBadge />}
             </h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <StatTile
@@ -131,6 +133,7 @@ export function MonitorView({
               <CardTitle className="text-base">Mention rate over time</CardTitle>
               <CardDescription>
                 Share of answers that mention {brandName}, per engine, per run.
+                {runs.some((r) => r.mock) && " Includes mock runs — see the run history."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -166,7 +169,10 @@ export function MonitorView({
                   <tr key={r.id} className="border-t border-navy-50">
                     <td className="py-2">{formatDate(r.started_at)}</td>
                     <td className="py-2">
-                      <RunStatusBadge status={r.displayStatus} />
+                      <span className="inline-flex items-center gap-1.5">
+                        <RunStatusBadge status={r.displayStatus} />
+                        {r.mock && <MockBadge />}
+                      </span>
                     </td>
                     <td className="py-2 text-right">
                       {r.stats.overall.measured}

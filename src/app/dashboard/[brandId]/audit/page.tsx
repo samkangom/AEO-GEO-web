@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CategoryCard } from "@/components/audit/category-card";
-import { ScoreHeadline, ScoreRing, unmeasuredPoints } from "@/components/audit/score-summary";
+import { isMockAudit, ScoreHeadline, ScoreRing, unmeasuredPoints } from "@/components/audit/score-summary";
+import { MockBadge } from "@/components/mock-badge";
 import { RunAuditButton } from "@/components/run-audit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBrandOr404 } from "@/lib/brands";
@@ -61,7 +62,10 @@ export default async function AuditPage({
         <CardContent className="flex flex-col gap-6 p-6 md:flex-row md:items-center">
           <ScoreRing score={latest.overall_score} toneMax={measuredMax} />
           <div className="flex-1 space-y-2">
-            <p className="text-sm font-medium uppercase tracking-wide text-navy-300">AI-readiness score</p>
+            <p className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-navy-300">
+              AI-readiness score{" "}
+              {isMockAudit(breakdown) && <MockBadge className="normal-case tracking-normal" />}
+            </p>
             <ScoreHeadline score={latest.overall_score} measuredMax={measuredMax} />
             {unmeasured > 0 && (
               <p className="text-sm text-navy-400">

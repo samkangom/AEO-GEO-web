@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { configuredEngines, queryEngine } from "@/lib/engines";
 import { classifySentiment } from "@/lib/engines/claude-tasks";
 import { log } from "@/lib/log";
+import { isMockMode } from "@/lib/mock-mode";
 import type { Database, EngineResult, MonitorRun } from "@/lib/supabase/types";
 import { executeMonitor, type MonitorDeps } from "./execute";
 import { displayStatus, STALE_RUN_MS, summariseRun, type RunStats } from "./stats";
@@ -13,12 +14,19 @@ type BrandRow = { id: string; name: string; url: string };
 /** Keeps one manual run inside the serverless time limit (maxDuration 300s). */
 export const MAX_PROMPTS_PER_RUN = 20;
 
-export const defaultMonitorDeps: MonitorDeps = {
-  configuredEngines: () => configuredEngines(),
-  queryEngine: (engine, prompt) => queryEngine(engine, prompt, { timeoutMs: 90_000 }),
-  classifySentiment,
-  onError: (event, err, ctx) => log.error(event, err, ctx),
-};
+/** Real engines; `salt` only varies mock answers (e.g. the seed script's backdated runs). */
+export function defaultMonitorDeps(brand: BrandRow, salt?: string): MonitorDeps {
+  return {
+    configuredEngines: () => configuredEngines(),
+    queryEngine: (engine, prompt) =>
+      queryEngine(engine, prompt, {
+        timeoutMs: 90_000,
+        context: { brandName: brand.name, brandUrl: brand.url, salt },
+      }),
+    classifySentiment,
+    onError: (event, err, ctx) => log.error(event, err, ctx),
+  };
+}
 
 /**
  * One monitor run: every active prompt × every configured engine.
@@ -32,7 +40,7 @@ export const defaultMonitorDeps: MonitorDeps = {
 export async function runMonitorForBrand(
   supabase: DB,
   brand: BrandRow,
-  deps: MonitorDeps = defaultMonitorDeps,
+  deps: MonitorDeps = defaultMonitorDeps(brand),
 ): Promise<{ runId: string } | { error: string }> {
   const { data: prompts, error: promptsError } = await supabase
     .from("prompts")
@@ -60,7 +68,7 @@ export async function runMonitorForBrand(
 
   const { data: run, error: runError } = await supabase
     .from("monitor_runs")
-    .insert({ brand_id: brand.id, status: "running" })
+    .insert({ brand_id: brand.id, status: "running", mock: isMockMode() })
     .select("id")
     .single();
   if (runError || !run) throw runError ?? new Error("Couldn't create monitor run");

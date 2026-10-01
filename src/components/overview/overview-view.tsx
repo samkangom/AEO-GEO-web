@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MockBadge } from "@/components/mock-badge";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, Circle, Minus } from "lucide-react";
 import { ScoreHeadline, ScoreRing } from "@/components/audit/score-summary";
 import { MentionChart } from "@/components/monitor/mention-chart";
@@ -21,7 +22,7 @@ const LABELS: Record<EngineId, string> = {
 export type OverviewProps = {
   brandId: string;
   brandName: string;
-  audit: { score: number; measuredMax: number; createdAt: string } | null;
+  audit: { score: number; measuredMax: number; createdAt: string; mock?: boolean } | null;
   activePrompts: number;
   totalPrompts: number;
   engines: EngineId[];
@@ -112,7 +113,9 @@ export function OverviewView({
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="flex flex-col">
           <CardHeader className="pb-2">
-            <CardDescription>AI-readiness score</CardDescription>
+            <CardDescription className="flex items-center justify-between gap-2">
+              AI-readiness score {audit?.mock && <MockBadge />}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-3">
             {audit ? (
@@ -144,7 +147,9 @@ export function OverviewView({
 
         <Card className="flex flex-col">
           <CardHeader className="pb-2">
-            <CardDescription>AI mention rate · latest run</CardDescription>
+            <CardDescription className="flex items-center justify-between gap-2">
+              AI mention rate · latest run {latestMeasured?.mock && <MockBadge />}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-3">
             {latestMeasured ? (
@@ -183,7 +188,9 @@ export function OverviewView({
 
         <Card className="flex flex-col">
           <CardHeader className="pb-2">
-            <CardDescription>Last monitor run</CardDescription>
+            <CardDescription className="flex items-center justify-between gap-2">
+              Last monitor run {latestRun?.mock && <MockBadge />}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-3">
             {latestRun ? (

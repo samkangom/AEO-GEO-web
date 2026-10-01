@@ -18,7 +18,8 @@
     "check": "npm run lint && npm run typecheck && npm run format:check && npm test",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > src/lib/supabase/types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/types.ts",
+    "seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts"
   },
   "engines": {
     "node": ">=20"

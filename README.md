@@ -15,9 +15,25 @@ AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude,
 | 5 | Manual monitor run + engine_results + history | ✅ |
 | 6 | Dashboard polish, charts, Prompts / Monitor / Ads tabs | ✅ |
 | 7 | Static INR pricing page + landing page | ✅ |
-| 8 | Seed/demo data + `MOCK_AI_RESPONSES` mode | ⏳ next |
+| 8 | Seed/demo data + `MOCK_AI_RESPONSES` mode | ✅ |
 
 Without AI keys, the audit's **Live AI visibility** category (40 pts) is reported as *not configured*. It scores 0 and the UI says so. It is never estimated.
+
+## Try it without AI keys (demo)
+
+```bash
+npm run db:start                     # local Supabase; copy its URL, anon key and service_role key into .env.local
+npm run seed:demo                    # demo@clearcite.local / clearcite-demo-123: 2 brands, audits, 6 weeks of runs
+npm run fixtures &                   # local fixture websites the demo brands point at
+MOCK_AI_RESPONSES=1 AUDIT_ALLOW_PRIVATE_HOSTS=1 npm run dev
+```
+
+**Mock mode** (`MOCK_AI_RESPONSES=1`) replaces every AI call (live visibility, prompt generation, monitor, sentiment) with a deterministic simulated answer:
+- Simulated answers start with "[Mock response …]", list only "Example Vendor" placeholders, report model `mock-openai` / `mock-anthropic`, and never claim a web search.
+- Mock runs are flagged in the database (`monitor_runs.mock`).
+- Everything simulated shows a **Mock** badge, and the dashboard shows a banner while mock mode is on.
+- Mock mode is ignored on the production site; it works locally and on Vercel preview deployments.
+- With mock mode off and no keys, the app shows "not configured" as before. It never estimates.
 
 ## For engineers & QA
 

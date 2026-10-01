@@ -1,4 +1,5 @@
 import { CheckCircle2, Info, Lightbulb, XCircle } from "lucide-react";
+import { MockBadge } from "@/components/mock-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CATEGORY_TITLES, type CategoryKey, type CategoryResult } from "@/lib/audit/types";
@@ -24,7 +25,10 @@ export function CategoryCard({ category, result }: { category: CategoryKey; resu
       <CardHeader className="gap-3 pb-4">
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-semibold">{CATEGORY_TITLES[category]}</h3>
-          <StatusBadge result={result} />
+          <span className="flex shrink-0 items-center gap-1.5">
+            {result.detail.mock === true && <MockBadge />}
+            <StatusBadge result={result} />
+          </span>
         </div>
         <div className="flex items-baseline gap-1">
           <span className="text-2xl font-semibold">{measured ? result.score : "—"}</span>

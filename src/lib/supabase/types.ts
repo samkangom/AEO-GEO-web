@@ -42,6 +42,8 @@ export type MonitorRun = {
   status: "running" | "completed" | "failed";
   started_at: string;
   finished_at: string | null;
+  /** Simulated answers (MOCK_AI_RESPONSES mode). */
+  mock: boolean;
 };
 export type EngineResult = {
   id: string;
@@ -69,7 +71,7 @@ export type Database = {
       brands: Table<Brand, "user_id" | "name" | "url", "id" | "industry" | "created_at">;
       audits: Table<Audit, "brand_id" | "overall_score" | "breakdown", "id" | "created_at">;
       prompts: Table<Prompt, "brand_id" | "text" | "language" | "intent", "id" | "active" | "created_at">;
-      monitor_runs: Table<MonitorRun, "brand_id", "id" | "status" | "started_at" | "finished_at">;
+      monitor_runs: Table<MonitorRun, "brand_id", "id" | "status" | "started_at" | "finished_at" | "mock">;
       engine_results: Table<
         EngineResult,
         "run_id" | "prompt_id" | "engine",

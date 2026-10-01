@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { isMockModel } from "@/lib/mock-mode";
+import { MockBadge } from "@/components/mock-badge";
 import { ArrowLeft, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +58,13 @@ export function RunDetailView({
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle>Run · {formatDate(run.started_at)}</CardTitle>
             <RunStatusBadge status={displayStatus(run)} />
+            {run.mock && <MockBadge />}
           </div>
+          {run.mock && (
+            <p className="text-sm text-amber-800">
+              This run used mock mode: the answers below are simulated, not real AI results.
+            </p>
+          )}
           <p className="text-sm text-navy-600">
             Mentioned in {stats.overall.mentioned} of {stats.overall.measured} answers (
             {formatRate(stats.overall)})
@@ -109,7 +117,10 @@ export function RunDetailView({
                         {r.sentiment[0].toUpperCase() + r.sentiment.slice(1)}
                       </Badge>
                     )}
-                    <span className="ml-auto text-xs text-navy-300">{r.model_version}</span>
+                    <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-navy-300">
+                      {isMockModel(r.model_version) && <MockBadge />}
+                      {r.model_version}
+                    </span>
                   </div>
                   {r.raw_response && (
                     <details className="mt-2 text-sm">
