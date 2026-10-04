@@ -61,7 +61,7 @@ export async function updatePromptText(_prev: FormState, formData: FormData): Pr
   if (!brand) return { error: "Brand not found." };
   if (mentionsBrand(parsed.data, brand)) {
     return {
-      error: `Leave “${brand.name}” out of the prompt — we're measuring whether AI brings you up on its own.`,
+      error: `Leave “${brand.name}”${brand.aliases?.length ? " and its other names" : ""} out of the prompt — we're measuring whether AI brings you up on its own.`,
     };
   }
 

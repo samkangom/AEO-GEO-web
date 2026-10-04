@@ -191,6 +191,14 @@ async function main() {
       if (error || !brand) fail(`Creating brand failed: ${error?.message}`);
       try {
         const result = await runAudit(brand, { engines: noEngines, preparePrompts: async () => [] });
+        // The engines were switched off on purpose, so say that rather than "no API key".
+        result.breakdown.live_visibility = {
+          ...result.breakdown.live_visibility,
+          status: "not_run",
+          summary:
+            "AI answers weren't checked for this real organisation in the demo data. Click “Run audit again” with API keys set to ask ChatGPT and Claude.",
+          fix: null,
+        };
         await supabase.from("audits").insert({
           brand_id: brand.id,
           overall_score: result.overallScore,

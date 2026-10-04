@@ -32,7 +32,7 @@ const brandSchema = z.object({
     .max(80)
     .optional()
     .transform((v) => v || null),
-  kind: z.enum(ORG_KINDS).default("business"),
+  kind: z.enum(ORG_KINDS, { message: "Choose a type of organisation." }).default("business"),
   // Comma-separated in the form; stored as a de-duplicated list.
   aliases: z
     .string()
