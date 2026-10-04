@@ -1,3 +1,4 @@
+import { ORG_KIND_NOUN, pricingApplies, type OrgKind } from "@/lib/org-kind";
 import * as cheerio from "cheerio";
 import { extractJsonLdTypes } from "./structured-data";
 import { CATEGORY_MAX, type CategoryResult } from "./types";
@@ -114,21 +115,28 @@ export type FoundPages = Record<PageKind, { url: string; html: string } | null>;
 
 const POINTS = { about: 4, faq: 4, pricing: 4, meta: 3 } as const;
 
-export function scoreContentSignals(analysis: HomepageAnalysis, found: FoundPages): CategoryResult {
+export function scoreContentSignals(
+  analysis: HomepageAnalysis,
+  found: FoundPages,
+  kind: OrgKind = "business",
+): CategoryResult {
   const max = CATEGORY_MAX.content_signals;
   const hasAbout = !!found.about;
   const hasFaq = analysis.faqOnHomepage || !!found.faq;
   const hasPricing = analysis.pricesOnHomepage || !!found.pricing;
+  // Public prices only signal anything for businesses; elsewhere the check is not applicable and costs no points.
+  const pricingCounts = pricingApplies(kind);
+  const pricingOk = hasPricing || !pricingCounts;
   const meta = analysis.metaDescription;
   const hasMeta = !!meta && meta.length >= META_DESCRIPTION_MIN;
 
   const score =
     (hasAbout ? POINTS.about : 0) +
     (hasFaq ? POINTS.faq : 0) +
-    (hasPricing ? POINTS.pricing : 0) +
+    (pricingOk ? POINTS.pricing : 0) +
     (hasMeta ? POINTS.meta : 0);
 
-  const checks = [
+  const checks: { label: string; passed: boolean | null; note?: string }[] = [
     {
       label: "There's an About page explaining who you are",
       passed: hasAbout,
@@ -139,11 +147,17 @@ export function scoreContentSignals(analysis: HomepageAnalysis, found: FoundPage
       passed: hasFaq,
       note: analysis.faqOnHomepage ? "Found on your homepage." : found.faq?.url,
     },
-    {
-      label: "Your pricing is clear and public",
-      passed: hasPricing,
-      note: analysis.pricesOnHomepage ? "Prices shown on your homepage." : found.pricing?.url,
-    },
+    pricingCounts
+      ? {
+          label: "Your pricing is clear and public",
+          passed: hasPricing,
+          note: analysis.pricesOnHomepage ? "Prices shown on your homepage." : found.pricing?.url,
+        }
+      : {
+          label: "Public pricing",
+          passed: null,
+          note: `Not applicable for a ${ORG_KIND_NOUN[kind]}, so no points are lost.`,
+        },
     {
       label: "Your homepage has a clear search description",
       passed: hasMeta,
@@ -155,24 +169,29 @@ export function scoreContentSignals(analysis: HomepageAnalysis, found: FoundPage
     },
   ];
 
-  const passed = [hasAbout, hasFaq, hasPricing, hasMeta].filter(Boolean).length;
+  const counted = pricingCounts ? [hasAbout, hasFaq, hasPricing, hasMeta] : [hasAbout, hasFaq, hasMeta];
+  const passed = counted.filter(Boolean).length;
   const summary =
-    passed === 4
+    passed === counted.length
       ? "Your site answers the basic questions AI tools look for: yes."
       : passed === 0
         ? "Your site answers the basic questions AI tools look for: no."
-        : `Your site answers the basic questions AI tools look for: partly (${passed} of 4).`;
+        : `Your site answers the basic questions AI tools look for: partly (${passed} of ${counted.length}).`;
 
   let fix: string | null = null;
-  if (!hasPricing) {
+  if (!pricingOk) {
     fix =
       "Publish at least starting prices (for example “Plans from ₹4,999/month”) on a Pricing page. When buyers ask AI “how much does it cost”, brands without public pricing are usually left out.";
   } else if (!hasFaq) {
     fix =
-      "Add an FAQ section answering the 5–10 questions customers ask your sales team most. AI answers often lift these word-for-word.";
+      kind === "business"
+        ? "Add an FAQ section answering the 5–10 questions customers ask your sales team most. AI answers often lift these word-for-word."
+        : "Add an FAQ page answering the 5–10 questions people ask you most. AI answers often lift these word-for-word.";
   } else if (!hasAbout) {
     fix =
-      "Add an About page covering who you are, where you're based, who you serve and since when. AI tools use it to decide whether you're a credible option.";
+      kind === "business"
+        ? "Add an About page covering who you are, where you're based, who you serve and since when. AI tools use it to decide whether you're a credible option."
+        : "Add an About page covering who you are, where you're based, what you do and since when. AI tools use it to describe you accurately.";
   } else if (!hasMeta) {
     fix =
       "Write a 120–160 character meta description for your homepage that says what you do, for whom, and where (e.g. “GST billing software for small businesses across India”).";
@@ -193,6 +212,7 @@ export function scoreContentSignals(analysis: HomepageAnalysis, found: FoundPage
       pricing_url: found.pricing?.url ?? null,
       faq_on_homepage: analysis.faqOnHomepage,
       prices_on_homepage: analysis.pricesOnHomepage,
+      pricing_applies: pricingCounts,
     },
   };
 }

@@ -80,6 +80,31 @@ test("content signals: homepage analysis finds links, prices and meta", () => {
   assert.match(r.fix ?? "", /FAQ/);
 });
 
+test("non-business sites: pricing and product schema don't apply and cost no points", () => {
+  const html = `<html><head><meta name="description" content="Official website of Example Party A, with our manifesto, programmes and state offices."></head><body></body></html>`;
+  const a = analyzeHomepage(html, `${SITE}/`);
+  const found = { about: { url: `${SITE}/about`, html: "" }, faq: null, pricing: null };
+
+  const business = scoreContentSignals(a, found);
+  assert.equal(business.score, 4 + 3);
+  assert.match(business.fix ?? "", /prices/);
+
+  const party = scoreContentSignals(a, found, "political_party");
+  assert.equal(party.score, 4 + 4 + 3);
+  const pricing = party.checks.find((c) => c.label === "Public pricing");
+  assert.equal(pricing?.passed, null);
+  assert.match(pricing?.note ?? "", /Not applicable for a political party/);
+  assert.match(party.fix ?? "", /FAQ/);
+  assert.match(party.summary, /partly \(2 of 3\)/);
+
+  const orgOnly = `<script type="application/ld+json">{"@type":"PoliticalParty"}</script>`;
+  const sd = scoreStructuredData({ url: SITE, html: orgOnly }, null, "political_party");
+  assert.equal(sd.score, 10 + 5);
+  assert.equal(scoreStructuredData({ url: SITE, html: orgOnly }, null).score, 10);
+  // A nonprofit can still describe its services, so that check stays.
+  assert.equal(scoreStructuredData({ url: SITE, html: orgOnly }, null, "nonprofit").score, 10);
+});
+
 test("content signals: unlinked SPA shell doesn't count as a page", () => {
   const shell = "<html><head><title>Acme</title></head><body><div id=root></div></body></html>";
   assert.equal(confirmsPage("about", shell, false), false);

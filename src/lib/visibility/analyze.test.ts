@@ -57,3 +57,21 @@ test("analyzeAnswer: cited only when a citation is on the brand's domain", () =>
   );
   assert.deepEqual(none, { mentioned: false, cited: false, position: null });
 });
+
+test("aliases count as mentions; short all-caps aliases match case exactly", () => {
+  const party = {
+    name: "Indian National Congress",
+    url: "https://inc.in",
+    aliases: ["INC", "Congress party"],
+  };
+  assert.equal(mentionsBrand("The INC released its manifesto in April.", party), true);
+  assert.equal(mentionsBrand("The Congress party has a farm-credit plan.", party), true);
+  assert.equal(mentionsBrand("Policies of the Indian National Congress include…", party), true);
+  // "INC" must not match the legal suffix in company names.
+  assert.equal(mentionsBrand("Acme Inc. and Foo inc are US companies.", party), false);
+
+  const bjp = { name: "Bharatiya Janata Party", url: "https://www.bjp.org", aliases: ["BJP"] };
+  assert.equal(mentionsBrand("1. BJP — publishes state-wise schemes", bjp), true);
+  assert.equal(listPosition("Parties:\n1. Example Party A\n2. BJP\n3. Example Party B", bjp), 2);
+  assert.equal(mentionsBrand("No party is named here.", bjp), false);
+});

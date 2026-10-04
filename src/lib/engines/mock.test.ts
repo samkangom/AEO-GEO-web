@@ -97,3 +97,15 @@ test("audit in mock mode: live visibility is measured but flagged as mock", asyn
     await site.close();
   }
 });
+
+test("prompt generation instructions follow the kind of organisation", async () => {
+  const { promptSystem } = await import("./claude-tasks");
+  assert.match(promptSystem(), /real buyers in India/);
+  assert.equal(promptSystem("business"), promptSystem());
+  const party = promptSystem("political_party");
+  assert.match(party, /neutral and informational/);
+  assert.match(party, /who to vote for/);
+  assert.match(party, /funding/);
+  assert.doesNotMatch(party, /buyers/);
+  assert.match(promptSystem("nonprofit"), /80G/);
+});

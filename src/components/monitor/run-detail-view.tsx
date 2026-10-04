@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { EngineId } from "@/lib/engines/types";
 import type { RunResult } from "@/lib/monitor/store";
 import { displayStatus, formatRate, summariseRun } from "@/lib/monitor/stats";
-import { LANGUAGE_LABELS, INTENT_LABELS, type Intent, type Language } from "@/lib/prompts/types";
+import { intentLabel, type OrgKind } from "@/lib/org-kind";
+import { LANGUAGE_LABELS, type Intent, type Language } from "@/lib/prompts/types";
 import type { MonitorRun } from "@/lib/supabase/types";
 import { formatDate } from "@/lib/utils";
 import { RunStatusBadge } from "./run-status-badge";
@@ -33,10 +34,12 @@ const SENTIMENT_VARIANT = { positive: "good", neutral: "muted", negative: "bad" 
 
 export function RunDetailView({
   brandId,
+  brandKind = "business",
   run,
   results,
 }: {
   brandId: string;
+  brandKind?: OrgKind;
   run: MonitorRun;
   results: RunResult[];
 }) {
@@ -98,7 +101,7 @@ export function RunDetailView({
           <Card key={rows[0].prompt_id}>
             <CardHeader className="pb-2">
               <div className="flex flex-wrap gap-2">
-                {prompt && <Badge>{INTENT_LABELS[prompt.intent as Intent]}</Badge>}
+                {prompt && <Badge>{intentLabel(prompt.intent as Intent, brandKind)}</Badge>}
                 {prompt && <Badge variant="muted">{LANGUAGE_LABELS[prompt.language as Language]}</Badge>}
               </div>
               <p className="text-base font-medium text-navy">“{prompt?.text ?? "Deleted prompt"}”</p>

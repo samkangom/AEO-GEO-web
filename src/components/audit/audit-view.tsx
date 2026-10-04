@@ -21,6 +21,14 @@ const SHORT_TITLES: Record<CategoryKey, string> = {
   content_signals: "Content",
 };
 
+/** Category names as they read mid-sentence ("AI" keeps its capitals). */
+const WIN_NAMES: Record<CategoryKey, string> = {
+  live_visibility: "live AI visibility",
+  crawl_access: "AI crawler access",
+  structured_data: "structured data",
+  content_signals: "content signals",
+};
+
 export type AuditRow = { id: string; overall_score: number; breakdown: unknown; created_at: string };
 
 /** The audit page once a brand has at least one audit. `audits` is newest first. */
@@ -50,7 +58,7 @@ export function AuditView({ brandId, audits }: { brandId: string; audits: [Audit
           />
           <p className="text-navy-100">
             {wins.length
-              ? `Your biggest win${wins.length > 1 ? "s" : ""}: ${wins.map((w) => w.title.toLowerCase()).join(" and ")}, worth up to ${winPoints} more points. The fixes are below.`
+              ? `Your biggest win${wins.length > 1 ? "s" : ""}: ${wins.map((w) => WIN_NAMES[w.key]).join(" and ")}, worth up to ${winPoints} more points. The fixes are below.`
               : "No site-side fixes left. Keep monitoring how AI answers mention you."}
           </p>
           {unmeasured > 0 && (

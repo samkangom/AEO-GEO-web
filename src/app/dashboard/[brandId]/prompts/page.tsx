@@ -7,19 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getBrandOr404 } from "@/lib/brands";
 import { promptGenerationAvailable } from "@/lib/engines/claude-tasks";
 import { listPrompts } from "@/lib/prompts/store";
-import { INTENTS, INTENT_LABELS } from "@/lib/prompts/types";
+import { intentHelp, intentLabel } from "@/lib/org-kind";
+import { INTENTS } from "@/lib/prompts/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Prompts" };
 // Prompt generation (a Claude call) runs on this route.
 export const maxDuration = 120;
-
-const INTENT_HELP: Record<(typeof INTENTS)[number], string> = {
-  shortlist: "Buyers asking for the best options",
-  comparison: "Buyers comparing options in your category",
-  pricing: "Buyers asking about cost and budget",
-  local: "Buyers looking in a specific city",
-};
 
 export default async function PromptsPage({ params }: { params: Promise<{ brandId: string }> }) {
   const { brandId } = await params;
@@ -89,8 +83,8 @@ export default async function PromptsPage({ params }: { params: Promise<{ brandI
           return (
             <Card key={intent}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">{INTENT_LABELS[intent]}</CardTitle>
-                <CardDescription>{INTENT_HELP[intent]}</CardDescription>
+                <CardTitle className="text-base">{intentLabel(intent, brand.kind)}</CardTitle>
+                <CardDescription>{intentHelp(intent, brand.kind)}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="divide-y divide-navy-50">

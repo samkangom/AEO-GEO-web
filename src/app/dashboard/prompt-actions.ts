@@ -19,7 +19,7 @@ async function requireBrand(brandId: string) {
   // RLS: returns nothing for another user's brand.
   const { data: brand } = await supabase
     .from("brands")
-    .select("id, name, url, industry")
+    .select("id, name, url, industry, kind, aliases")
     .eq("id", brandId)
     .maybeSingle();
   return { supabase, brand };

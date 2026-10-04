@@ -1,6 +1,11 @@
 import type { Citation } from "@/lib/engines/types";
 
-export type BrandRef = { name: string; url: string };
+export type BrandRef = {
+  name: string;
+  url: string;
+  /** Other names the brand goes by ("BJP"), counted as mentions too. */
+  aliases?: string[];
+};
 
 export type AnswerAnalysis = {
   /** Brand name or domain appears in the answer text. */
@@ -32,7 +37,15 @@ function compact(s: string) {
   return s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
 }
 
-/** Name variants we accept as a mention: full name, name without "Pvt Ltd" etc., and the domain. */
+/**
+ * Short all-caps aliases ("BJP", "INC", "AAP") must match exactly in case, so
+ * "INC" isn't found in "Acme Inc." and "AAP" isn't found in "aap" (Hindi "you").
+ */
+function isAcronym(term: string) {
+  return term.length <= 5 && /^[\p{Lu}\p{N}&.]+$/u.test(term);
+}
+
+/** Name variants we accept as a mention: full name, name without "Pvt Ltd" etc., the domain, and the brand's aliases. */
 export function brandTerms(brand: BrandRef): string[] {
   const terms = new Set<string>();
   const name = brand.name.trim().replace(/\s+/g, " ");
@@ -41,14 +54,24 @@ export function brandTerms(brand: BrandRef): string[] {
   if (short.length >= 3) terms.add(short);
   const host = brandHost(brand.url);
   if (host) terms.add(host);
+  for (const alias of brand.aliases ?? []) {
+    const a = alias.trim().replace(/\s+/g, " ");
+    if (a.length >= 2) terms.add(a);
+  }
   return [...terms];
+}
+
+function termPattern(term: string) {
+  // Word-boundary match that also works for non-Latin scripts.
+  return new RegExp(
+    `(?<![\\p{L}\\p{N}])${escapeRegExp(term)}(?![\\p{L}\\p{N}])`,
+    isAcronym(term) ? "u" : "iu",
+  );
 }
 
 export function mentionsBrand(text: string, brand: BrandRef): boolean {
   for (const term of brandTerms(brand)) {
-    // Word-boundary match that also works for non-Latin scripts.
-    const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(term)}(?![\\p{L}\\p{N}])`, "iu");
-    if (re.test(text)) return true;
+    if (termPattern(term).test(text)) return true;
   }
   // "Kirana Books" vs "KiranaBooks": join 1–3 consecutive words and compare
   // whole, so word boundaries still hold. Only for distinctive names.

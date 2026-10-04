@@ -1,6 +1,7 @@
 // Hand-maintained to match supabase/migrations. Regenerate with
 // `npx supabase gen types typescript --linked > src/lib/supabase/types.ts`
 // once a project is linked.
+import type { OrgKind } from "@/lib/org-kind";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -18,6 +19,10 @@ export type Brand = {
   name: string;
   url: string;
   industry: string | null;
+  /** Which checks apply and how buyer questions are written. */
+  kind: OrgKind;
+  /** Other names AI answers may use for the brand ("BJP" for "Bharatiya Janata Party"). */
+  aliases: string[];
   created_at: string;
 };
 export type Audit = {
@@ -68,7 +73,7 @@ export type Database = {
   public: {
     Tables: {
       profiles: Table<Profile, "id", "company_name" | "created_at">;
-      brands: Table<Brand, "user_id" | "name" | "url", "id" | "industry" | "created_at">;
+      brands: Table<Brand, "user_id" | "name" | "url", "id" | "industry" | "kind" | "aliases" | "created_at">;
       audits: Table<Audit, "brand_id" | "overall_score" | "breakdown", "id" | "created_at">;
       prompts: Table<Prompt, "brand_id" | "text" | "language" | "intent", "id" | "active" | "created_at">;
       monitor_runs: Table<MonitorRun, "brand_id", "id" | "status" | "started_at" | "finished_at" | "mock">;

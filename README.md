@@ -27,7 +27,8 @@ Follow **[docs/DEPLOY.md](docs/DEPLOY.md)**: Supabase + Vercel, about 15 minutes
 
 ```bash
 npm run db:start                     # local Supabase; copy its URL, anon key and service_role key into .env.local
-npm run seed:demo                    # demo@clearcite.local / clearcite-demo-123: 2 brands, audits, 6 weeks of runs
+npm run seed:demo                    # demo@clearcite.local / clearcite-demo-123: 2 brands, audits, 6 weeks of runs,
+                                     # plus 4 real sites (bjp.org, inc.in, lamzing.com, awpara.com) with live site audits
 npm run fixtures &                   # local fixture websites the demo brands point at
 MOCK_AI_RESPONSES=1 AUDIT_ALLOW_PRIVATE_HOSTS=1 npm run dev
 ```
@@ -81,6 +82,14 @@ Audit routes set `maxDuration = 60`. Audits usually take 1 to 5 seconds.
 | Structured data | 20 | JSON-LD on the homepage, including `@graph` and nested nodes: Organization or subtypes (10), Product/Service/SoftwareApplication (5), FAQPage on the homepage or FAQ page (5). |
 | Content signals | 15 | About page (4), FAQ content (4), public pricing, either a pricing page or ₹/Rs/INR prices on the homepage (4), and a meta description of at least 50 characters (3). Pages are confirmed from the raw HTML, so a JavaScript-only shell doesn't count. Most AI crawlers don't run JavaScript. |
 | Live AI visibility | 40 | 5 of the brand's prompts (4 English, one per intent, plus 1 Hindi/Hinglish), each asked to every configured engine (ChatGPT, Claude) with web search, localised to India. Score = 40 × the share of answers that mention the brand. Failed calls are excluded and reported. Each answer, the model that produced it, its citations and its list position are stored in `detail.results`. |
+
+**Any website, not only B2B.** Each brand has a type: business (the default), political party, nonprofit, government body, or other. For anything other than a business:
+- Public pricing doesn't apply, so that check is shown as "not applicable" and costs no points.
+- For parties and government bodies, Product/Service schema doesn't apply either. It also costs no points.
+- Claude writes the tracked questions for that audience: voters and journalists, donors, or citizens. For political parties the questions stay neutral and informational, and never ask an assistant who to vote for.
+- The "pricing" intent is labelled "Funding & membership" for a party, "Donations & fees" for a nonprofit, and "Fees & charges" for a government body.
+
+A brand can also list **other names** (for example "BJP" for "Bharatiya Janata Party"), and AI answers that use any of them count as mentions. Short all-caps names match case exactly, so "INC" isn't found in "Acme Inc.".
 
 Every weak category shows one plain-language recommended fix. Raw findings are stored in `audits.breakdown[category].detail`.
 

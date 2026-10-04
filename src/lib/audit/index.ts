@@ -12,6 +12,7 @@ import { checkLiveVisibility, type LiveVisibilityDeps } from "./live-visibility"
 import { FetchBlockedError, safeFetch } from "./safe-fetch";
 import { scoreStructuredData } from "./structured-data";
 import { CATEGORY_MAX, type AuditBreakdown, type CategoryResult } from "./types";
+import type { OrgKind } from "@/lib/org-kind";
 
 export class AuditError extends Error {}
 
@@ -53,7 +54,15 @@ function unreachableHomepage(max: number, reason: string, fixTarget: string): Ca
   };
 }
 
-export type AuditBrand = { name: string; url: string; industry?: string | null };
+export type AuditBrand = {
+  name: string;
+  url: string;
+  industry?: string | null;
+  /** Defaults to "business". Decides which checks apply and how buyer questions are written. */
+  kind?: OrgKind;
+  /** Other names counted as mentions in AI answers. */
+  aliases?: string[];
+};
 export type SiteInfo = { title: string | null; description: string | null };
 export type AuditResult = { overallScore: number; breakdown: AuditBreakdown };
 
@@ -77,7 +86,7 @@ type SiteChecks = Pick<AuditBreakdown, "crawl_access" | "structured_data" | "con
  * Throws AuditError only when the site can't be reached at all (bad domain etc.);
  * HTTP-level failures are recorded in the breakdown instead.
  */
-async function runSiteChecks(siteUrl: string): Promise<SiteChecks> {
+async function runSiteChecks(siteUrl: string, kind: OrgKind): Promise<SiteChecks> {
   const origin = new URL(siteUrl).origin;
 
   const homepagePromise = safeFetch(siteUrl, { timeoutMs: 12_000 }).catch((e: unknown) => {
@@ -114,8 +123,8 @@ async function runSiteChecks(siteUrl: string): Promise<SiteChecks> {
       findPage("pricing", analysis.pricesOnHomepage ? [] : analysis.candidates.pricing),
     ]);
     const found: FoundPages = { about, faq, pricing };
-    structuredData = scoreStructuredData({ url: homepage.finalUrl, html: homepage.text }, faq);
-    contentSignals = scoreContentSignals(analysis, found);
+    structuredData = scoreStructuredData({ url: homepage.finalUrl, html: homepage.text }, faq, kind);
+    contentSignals = scoreContentSignals(analysis, found, kind);
     site = { title: analysis.title, description: analysis.metaDescription };
   }
 
@@ -129,14 +138,19 @@ async function runSiteChecks(siteUrl: string): Promise<SiteChecks> {
 
 /** Runs all four audit checks for a brand. */
 export async function runAudit(brand: AuditBrand, opts: AuditOptions = {}): Promise<AuditResult> {
-  const { site, ...siteChecks } = await runSiteChecks(brand.url);
+  const kind = brand.kind ?? "business";
+  const { site, ...siteChecks } = await runSiteChecks(brand.url, kind);
 
   const preparePrompts =
     opts.preparePrompts ??
     (async (info: SiteInfo) =>
-      (await generatePromptSet({ ...brand, siteTitle: info.title, siteDescription: info.description }))
+      (await generatePromptSet({ ...brand, kind, siteTitle: info.title, siteDescription: info.description }))
         .prompts);
-  const liveVisibility = await checkLiveVisibility(brand, () => preparePrompts(site), opts.engines);
+  const liveVisibility = await checkLiveVisibility(
+    { ...brand, kind },
+    () => preparePrompts(site),
+    opts.engines,
+  );
 
   const breakdown: AuditBreakdown = { ...siteChecks, live_visibility: liveVisibility };
   const overallScore = Object.values(breakdown).reduce((sum, c) => sum + c.score, 0);

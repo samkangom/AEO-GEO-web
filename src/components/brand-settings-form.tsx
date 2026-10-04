@@ -5,6 +5,7 @@ import { updateBrand } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OrgFields } from "@/components/org-fields";
 import type { Brand } from "@/lib/supabase/types";
 
 export function BrandSettingsForm({ brand }: { brand: Brand }) {
@@ -21,6 +22,7 @@ export function BrandSettingsForm({ brand }: { brand: Brand }) {
         <Label htmlFor="url">Website</Label>
         <Input id="url" name="url" defaultValue={brand.url} required />
       </div>
+      <OrgFields kind={brand.kind} aliases={brand.aliases} />
       <div className="space-y-2">
         <Label htmlFor="industry">
           Industry{" "}

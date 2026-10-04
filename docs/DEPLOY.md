@@ -7,7 +7,7 @@ About 15 minutes, no installs, free plans. You'll end up with a URL like
 
 1. Go to **supabase.com** → **Start your project** → sign in with GitHub.
 2. **New project**: name `clearcite`, choose a strong database password (save it), region **Mumbai (ap-south-1)** → **Create new project**. Wait ~2 minutes until it says the project is ready.
-3. Left menu → **SQL Editor** → **New query**. Paste the whole of `clearcite-database-setup.sql` (all files in `supabase/migrations/`, in order) → **Run**. You should see "Success. No rows returned".
+3. Left menu → **SQL Editor** → **New query**. Paste the whole of `clearcite-database-setup.sql` (all files in `supabase/migrations/`, in order) → **Run**. You should see "Success. No rows returned". Set up before 4 Oct 2026? Run only `supabase/migrations/20261004000000_org_kind_aliases.sql` (adds the organisation type and other names).
 4. Left menu → **Authentication** → **Sign In / Providers** → **Email** → turn **Confirm email** **off** → **Save**. (Testers can then sign up without checking email.)
 5. Left menu → **Project Settings** → **API Keys** (or **Data API**) and copy two values into a notepad:
    - **Project URL** — like `https://abcdefgh.supabase.co`

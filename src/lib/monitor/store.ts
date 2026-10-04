@@ -9,7 +9,7 @@ import { executeMonitor, type MonitorDeps } from "./execute";
 import { displayStatus, STALE_RUN_MS, summariseRun, type RunStats } from "./stats";
 
 type DB = SupabaseClient<Database>;
-type BrandRow = { id: string; name: string; url: string };
+type BrandRow = { id: string; name: string; url: string; aliases?: string[] };
 
 /** Keeps one manual run inside the serverless time limit (maxDuration 300s). */
 export const MAX_PROMPTS_PER_RUN = 20;

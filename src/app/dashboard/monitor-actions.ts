@@ -18,7 +18,7 @@ export async function runMonitorNow(_prev: FormState, formData: FormData): Promi
   // RLS: only the owner's brand is returned.
   const { data: brand } = await supabase
     .from("brands")
-    .select("id, name, url")
+    .select("id, name, url, aliases")
     .eq("id", brandId)
     .maybeSingle();
   if (!brand) return { error: "Brand not found." };

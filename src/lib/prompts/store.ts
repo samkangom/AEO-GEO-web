@@ -1,10 +1,19 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generatePromptSet } from "@/lib/engines/claude-tasks";
+import type { OrgKind } from "@/lib/org-kind";
 import type { Database, Prompt } from "@/lib/supabase/types";
 
 type DB = SupabaseClient<Database>;
-type BrandRow = { id: string; name: string; url: string; industry: string | null };
+
+type BrandRow = {
+  id: string;
+  name: string;
+  url: string;
+  industry: string | null;
+  kind?: OrgKind;
+  aliases?: string[];
+};
 export type SiteInfo = { title: string | null; description: string | null };
 
 /** Site details from the brand's latest audit, used as context for prompt generation. */
@@ -47,6 +56,8 @@ export async function generateAndSavePrompts(
     name: brand.name,
     url: brand.url,
     industry: brand.industry,
+    kind: brand.kind,
+    aliases: brand.aliases,
     siteTitle: site.title,
     siteDescription: site.description,
   });

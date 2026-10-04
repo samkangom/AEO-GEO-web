@@ -5,6 +5,7 @@ import { createBrand } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OrgFields } from "@/components/org-fields";
 
 export function BrandForm() {
   const [state, action, pending] = useActionState(createBrand, undefined);
@@ -26,6 +27,7 @@ export function BrandForm() {
         <Label htmlFor="url">Website</Label>
         <Input id="url" name="url" placeholder="acmebilling.in" required inputMode="url" disabled={pending} />
       </div>
+      <OrgFields disabled={pending} />
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <Button type="submit" variant="accent" className="w-full" disabled={pending}>
         {pending

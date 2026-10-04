@@ -10,6 +10,12 @@
  * Re-running replaces the demo account. Refuses non-local Supabase unless
  * --allow-remote is passed.
  *
+ * The account also gets four real public websites (two political parties, two
+ * companies) with a real site audit run at seed time — crawler access,
+ * structured data and content, fetched live. Their AI-answer check is left
+ * "not configured" (no mock answers about real organisations); run it from
+ * the app with API keys set. Skip them with --no-real-sites (e.g. offline).
+ *
  * Needs SUPABASE_SERVICE_ROLE_KEY (printed by `npm run db:start`) in .env.local.
  */
 import { loadEnvConfig } from "@next/env";
@@ -30,6 +36,38 @@ const DEMO_BRANDS = [
   { name: "Kiranabooks", site: "well-optimised", port: 4004, industry: "GST billing software" },
   { name: "Sharma Pumps", site: "minimal", port: 4002, industry: "industrial water pumps" },
 ];
+
+/** Real websites: site checks are fetched live; no simulated AI answers are stored for them. */
+const REAL_SITES = [
+  {
+    name: "Bharatiya Janata Party",
+    url: "https://www.bjp.org",
+    kind: "political_party",
+    aliases: ["BJP"],
+    industry: "national political party",
+  },
+  {
+    name: "Indian National Congress",
+    url: "https://inc.in",
+    kind: "political_party",
+    aliases: ["INC", "Congress party"],
+    industry: "national political party",
+  },
+  {
+    name: "Lamzing Technologies",
+    url: "https://www.lamzing.com",
+    kind: "business",
+    aliases: ["Lamzing"],
+    industry: "custom software and digital solutions",
+  },
+  {
+    name: "Awpara",
+    url: "https://www.awpara.com",
+    kind: "business",
+    aliases: [],
+    industry: "AR, VR, XR and AI solutions",
+  },
+] as const;
 
 function fail(msg: string): never {
   console.error(`✘ ${msg}`);
@@ -135,6 +173,34 @@ async function main() {
     }
   } finally {
     await Promise.all(servers.map((s) => s.close()));
+  }
+
+  if (!args.includes("--no-real-sites")) {
+    // Real sites must be fetched from the internet, never through the private-host allowance.
+    delete process.env.AUDIT_ALLOW_PRIVATE_HOSTS;
+    const noEngines = {
+      configuredEngines: () => [],
+      queryEngine: () => Promise.reject(new Error("unused")),
+    };
+    for (const def of REAL_SITES) {
+      const { data: brand, error } = await supabase
+        .from("brands")
+        .insert({ user_id: userId, ...def, aliases: [...def.aliases] })
+        .select("id, name, url, industry, kind, aliases")
+        .single();
+      if (error || !brand) fail(`Creating brand failed: ${error?.message}`);
+      try {
+        const result = await runAudit(brand, { engines: noEngines, preparePrompts: async () => [] });
+        await supabase.from("audits").insert({
+          brand_id: brand.id,
+          overall_score: result.overallScore,
+          breakdown: result.breakdown,
+        });
+        console.log(`✔ ${def.name}: real site audit ${result.overallScore}/100 (AI answers not run)`);
+      } catch (e) {
+        console.log(`· ${def.name}: added without an audit (${e instanceof Error ? e.message : e})`);
+      }
+    }
   }
 
   console.log(`\nDemo ready. Log in at http://localhost:3000/login as ${EMAIL} / ${PASSWORD}`);

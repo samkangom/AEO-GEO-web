@@ -12,6 +12,7 @@ import { pickAuditPrompts } from "@/lib/prompts/select";
 import { PromptsUnavailableError, type PromptLike } from "@/lib/prompts/types";
 import { analyzeAnswer, type BrandRef } from "@/lib/visibility/analyze";
 import { CATEGORY_MAX, type CategoryResult, type CheckItem } from "./types";
+import type { OrgKind } from "@/lib/org-kind";
 
 export type LiveVisibilityDeps = {
   configuredEngines: () => EngineId[];
@@ -50,7 +51,7 @@ function unmeasured(status: "not_configured" | "error", summary: string, fix: st
  * reported; nothing is estimated.
  */
 export async function checkLiveVisibility(
-  brand: BrandRef,
+  brand: BrandRef & { kind?: OrgKind },
   preparePrompts: () => Promise<PromptLike[]>,
   deps: LiveVisibilityDeps = defaultDeps(brand),
 ): Promise<CategoryResult> {
@@ -168,7 +169,9 @@ export async function checkLiveVisibility(
   const fix =
     mentioned.length === measured.length
       ? null
-      : "AI answers lean on third-party lists and reviews. Get your brand onto the pages they cite — industry “best of” lists, G2/Capterra/IndiaMART/Justdial profiles, and news or partner mentions — and publish your own comparison and “best X in <city>” pages. Then fix any gaps in the other categories below.";
+      : (brand.kind ?? "business") === "business"
+        ? "AI answers lean on third-party lists and reviews. Get your brand onto the pages they cite — industry “best of” lists, G2/Capterra/IndiaMART/Justdial profiles, and news or partner mentions — and publish your own comparison and “best X in <city>” pages. Then fix any gaps in the other categories below."
+        : "AI answers lean on sources they trust: news coverage, reference pages and official listings. Publish clear, dated explainers of what you do on your own site, keep your reference listings accurate, and check which pages the answers below cite. Then fix any gaps in the other categories below.";
 
   return {
     score,

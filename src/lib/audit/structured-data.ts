@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { offeringsApply, ORG_KIND_NOUN, type OrgKind } from "@/lib/org-kind";
 import { CATEGORY_MAX, type CategoryResult } from "./types";
 
 const ORGANIZATION_TYPES = new Set([
@@ -10,6 +11,8 @@ const ORGANIZATION_TYPES = new Set([
   "ProfessionalService",
   "Store",
   "NGO",
+  "PoliticalParty",
+  "GovernmentOffice",
   "EducationalOrganization",
   "MedicalOrganization",
   "GovernmentOrganization",
@@ -77,31 +80,44 @@ export function extractJsonLdTypes(html: string): { types: string[]; blocks: num
 
 export type PageHtml = { url: string; html: string };
 
-export function scoreStructuredData(homepage: PageHtml, faqPage: PageHtml | null): CategoryResult {
+export function scoreStructuredData(
+  homepage: PageHtml,
+  faqPage: PageHtml | null,
+  kind: OrgKind = "business",
+): CategoryResult {
   const max = CATEGORY_MAX.structured_data;
   const home = extractJsonLdTypes(homepage.html);
   const faq = faqPage ? extractJsonLdTypes(faqPage.html) : null;
 
   const hasOrg = home.types.some((t) => ORGANIZATION_TYPES.has(t));
+  // Not applicable (parties, government bodies) counts as met: it never costs points.
+  const offeringApplies = offeringsApply(kind);
   const hasOffering = home.types.some((t) => OFFERING_TYPES.has(t));
+  const offeringOk = hasOffering || !offeringApplies;
   const faqOnHome = home.types.includes("FAQPage");
   const faqOnFaqPage = faq?.types.includes("FAQPage") ?? false;
   const hasFaq = faqOnHome || faqOnFaqPage;
 
   const score =
-    (hasOrg ? POINTS.organization : 0) + (hasOffering ? POINTS.offering : 0) + (hasFaq ? POINTS.faq : 0);
+    (hasOrg ? POINTS.organization : 0) + (offeringOk ? POINTS.offering : 0) + (hasFaq ? POINTS.faq : 0);
 
-  const checks = [
+  const checks: { label: string; passed: boolean | null; note?: string }[] = [
     {
       label: "Your site tells AI who you are (Organization details)",
       passed: hasOrg,
       note: hasOrg ? undefined : "No Organization or LocalBusiness schema found on your homepage.",
     },
-    {
-      label: "Your products or services are described in a machine-readable way",
-      passed: hasOffering,
-      note: hasOffering ? undefined : "No Product or Service schema found on your homepage.",
-    },
+    offeringApplies || hasOffering
+      ? {
+          label: "Your products or services are described in a machine-readable way",
+          passed: hasOffering,
+          note: hasOffering ? undefined : "No Product or Service schema found on your homepage.",
+        }
+      : {
+          label: "Product or Service schema",
+          passed: null,
+          note: `Not applicable for a ${ORG_KIND_NOUN[kind]}, so no points are lost.`,
+        },
     {
       label: "Your FAQs are marked up so AI can quote them",
       passed: hasFaq,
@@ -120,18 +136,18 @@ export function scoreStructuredData(homepage: PageHtml, faqPage: PageHtml | null
     });
   }
 
+  const who = kind === "business" ? "business" : "organisation";
   const summary =
     score === max
-      ? "AI tools can read clear, labelled facts about your business: yes."
+      ? `AI tools can read clear, labelled facts about your ${who}: yes.`
       : score === 0
-        ? "AI tools can read clear, labelled facts about your business: no."
-        : "AI tools can read clear, labelled facts about your business: partly.";
+        ? `AI tools can read clear, labelled facts about your ${who}: no.`
+        : `AI tools can read clear, labelled facts about your ${who}: partly.`;
 
   let fix: string | null = null;
   if (!hasOrg) {
-    fix =
-      "Add Organization schema (JSON-LD) to your homepage with your company name, logo, website, address in India and social profiles. Most website builders and SEO plugins (Yoast, Rank Math) can do this in a few clicks.";
-  } else if (!hasOffering) {
+    fix = `Add Organization schema (JSON-LD) to your homepage with your ${kind === "business" ? "company" : "official"} name, logo, website, address in India and social profiles. Most website builders and SEO plugins (Yoast, Rank Math) can do this in a few clicks.`;
+  } else if (!offeringOk) {
     fix =
       "Add Product or Service schema describing what you sell — name, short description and, ideally, a starting price in ₹.";
   } else if (!hasFaq) {

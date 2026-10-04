@@ -8,6 +8,7 @@ import { log } from "@/lib/log";
 import { ensurePrompts } from "@/lib/prompts/store";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
+import { ORG_KINDS } from "@/lib/org-kind";
 import { normaliseSiteUrl } from "@/lib/url";
 
 export type FormState = { error?: string; ok?: boolean } | undefined;
@@ -31,6 +32,25 @@ const brandSchema = z.object({
     .max(80)
     .optional()
     .transform((v) => v || null),
+  kind: z.enum(ORG_KINDS).default("business"),
+  // Comma-separated in the form; stored as a de-duplicated list.
+  aliases: z
+    .string()
+    .optional()
+    .transform((v, ctx) => {
+      const list = [...new Set((v ?? "").split(",").map((a) => a.trim().replace(/\s+/g, " ")))].filter(
+        Boolean,
+      );
+      if (list.length > 10) {
+        ctx.addIssue({ code: "custom", message: "Add up to 10 other names." });
+        return z.NEVER;
+      }
+      if (list.some((a) => a.length > 60)) {
+        ctx.addIssue({ code: "custom", message: "Keep each other name under 60 characters." });
+        return z.NEVER;
+      }
+      return list;
+    }),
 });
 
 async function requireUser() {
@@ -51,7 +71,7 @@ async function auditBrand(brandId: string): Promise<{ error?: string }> {
   const { supabase } = await requireUser();
   const { data: brand } = await supabase
     .from("brands")
-    .select("id, name, url, industry")
+    .select("id, name, url, industry, kind, aliases")
     .eq("id", brandId)
     .maybeSingle();
   if (!brand) return { error: "Brand not found." };
@@ -92,13 +112,16 @@ export async function createBrand(_prev: FormState, formData: FormData): Promise
   const parsed = brandSchema.safeParse({
     name: formData.get("name"),
     url: formData.get("url"),
+    kind: formData.get("kind") || undefined,
+    aliases: formData.get("aliases") ?? undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { supabase, user } = await requireUser();
+  const { name, url, kind, aliases } = parsed.data;
   const { data: brand, error } = await supabase
     .from("brands")
-    .insert({ user_id: user.id, name: parsed.data.name, url: parsed.data.url })
+    .insert({ user_id: user.id, name, url, kind, aliases })
     .select("id")
     .single();
   if (error || !brand) {
@@ -130,6 +153,8 @@ export async function updateBrand(_prev: FormState, formData: FormData): Promise
     name: formData.get("name"),
     url: formData.get("url"),
     industry: formData.get("industry") ?? undefined,
+    kind: formData.get("kind") || undefined,
+    aliases: formData.get("aliases") ?? undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
