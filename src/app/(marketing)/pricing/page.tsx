@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Faq } from "@/components/marketing/faq";
 import { PlanCards } from "@/components/marketing/plan-cards";
+import { CopyEmailButton } from "@/components/marketing/copy-email-button";
+import { formatInr, plans } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -9,6 +11,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
 };
 
+const starter = plans.find((p) => p.id === "starter")!;
+const starterGst = Math.round(starter.priceInr * 0.18);
+
 const FAQ = [
   {
     q: "Can I pay online?",
@@ -16,7 +21,7 @@ const FAQ = [
   },
   {
     q: "Do prices include GST?",
-    a: "No. Prices are per month in Indian rupees; 18% GST is added to the invoice.",
+    a: `No. Prices are per month in Indian rupees; 18% GST is added to the invoice. For example, ${starter.name} is ${formatInr(starter.priceInr)} + ${formatInr(starterGst)} GST = ${formatInr(starter.priceInr + starterGst)} a month.`,
   },
   {
     q: "Which AI engines do you check?",
@@ -55,6 +60,23 @@ export default function PricingPage() {
           Questions about plans
         </h2>
         <Faq items={FAQ} />
+      </section>
+
+      <section
+        id="contact"
+        aria-labelledby="pricing-contact"
+        className="flex flex-wrap items-center justify-between gap-6 rounded-3xl bg-accent-light p-7 md:p-11"
+      >
+        <div className="max-w-xl space-y-2">
+          <h2 id="pricing-contact" className="text-3xl font-bold text-navy">
+            Talk to us about a paid plan
+          </h2>
+          <p className="text-accent-dark">
+            Write to <span className="select-all font-semibold">{siteConfig.contactEmail}</span> with your
+            brand and the plan you want. We set it up for you and send a GST invoice.
+          </p>
+        </div>
+        <CopyEmailButton email={siteConfig.contactEmail} />
       </section>
     </div>
   );

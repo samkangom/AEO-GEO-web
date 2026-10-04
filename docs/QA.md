@@ -96,9 +96,9 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | DASH-3 | Brand with 2+ monitor runs. | Overview shows the score ring, the latest mention rate with "Up/Down N pts since <date>", per-engine rates, the last-run summary and the trend chart. Every "View …" link opens the right page. |
 | DASH-4 (auto) | Add a second brand, then open /dashboard. | "All brands" shows a card per brand with score, mention rate or "Not monitored yet". The switcher has an "All brands" item. |
 | DASH-5 (auto) | Ads tab. | "Coming soon" page. Nothing is purchasable. "Ask about early access" opens an email. |
-| DASH-6 | Phone width: Overview and the tab bar. | The tab bar scrolls sideways, cards stack, and chart date labels don't overlap. |
+| DASH-6 | Phone width: Overview and the navigation. | The sidebar sits above the page, its section links scroll sideways, cards stack, and chart date labels don't overlap. |
 | DASH-7 | Open a run detail page. | The Monitor tab stays highlighted. |
-| DASH-8 | Slow network (DevTools → Slow 3G), then switch tabs. | A loading skeleton shows instead of a blank page. |
+| DASH-8 | Slow network (DevTools → Slow 3G), then switch sections in the sidebar. | A loading skeleton shows instead of a blank page. |
 
 ## Monitor (needs AI keys and active prompts)
 

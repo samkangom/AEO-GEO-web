@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { MockBadge } from "@/components/mock-badge";
 import { siteConfig } from "@/config/site";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { EngineId } from "@/lib/engines/types";
 import type { RunWithStats } from "@/lib/monitor/store";
 import { formatRate } from "@/lib/monitor/stats";
 import { formatDate } from "@/lib/utils";
-import { mentionTrend } from "@/lib/monitor/chart";
+import { latestDelta, mentionTrend } from "@/lib/monitor/chart";
 import { MentionChart } from "./mention-chart";
 import { RunMonitorButton } from "./run-monitor-button";
 import { RunStatusBadge } from "./run-status-badge";
@@ -39,6 +40,7 @@ export function MonitorView({
 }: MonitorViewProps) {
   const latest = runs.find((r) => r.stats.overall.measured > 0);
   const { engines: chartEngines, points } = mentionTrend(runs, engines);
+  const delta = latestDelta(runs);
 
   const calls = activePrompts * engines.length;
   const blocker = !engines.length
@@ -92,7 +94,14 @@ export function MonitorView({
               <StatTile
                 label="Mention rate"
                 value={formatRate(latest.stats.overall)}
-                sub={`${latest.stats.overall.mentioned} of ${latest.stats.overall.measured} answers`}
+                sub={
+                  !delta
+                    ? `${latest.stats.overall.mentioned} of ${latest.stats.overall.measured} answers`
+                    : delta.points === 0
+                      ? "No change vs previous run"
+                      : `${delta.points > 0 ? "+" : "−"}${Math.abs(delta.points)} pts vs previous run`
+                }
+                subTone={!delta || delta.points === 0 ? undefined : delta.points > 0 ? "up" : "down"}
               />
               {chartEngines.map((e) => (
                 <StatTile
@@ -107,22 +116,16 @@ export function MonitorView({
                   }
                 />
               ))}
-              <StatTile label="Cited" value={String(latest.stats.cited)} sub="answers linking to your site" />
               <StatTile
-                label="Avg. position"
-                value={latest.stats.avgPosition ? `#${latest.stats.avgPosition.toFixed(1)}` : "—"}
-                sub="when listed"
-              />
-              <StatTile
-                label="Sentiment"
-                value={`${latest.stats.sentiment.positive} / ${latest.stats.sentiment.neutral} / ${latest.stats.sentiment.negative}`}
-                sub="positive / neutral / negative"
+                label="Cites your site"
+                value={String(latest.stats.cited)}
+                sub="answers link to your site"
               />
               {latest.stats.failed > 0 && (
                 <StatTile
                   label="Couldn't check"
                   value={String(latest.stats.failed)}
-                  sub="engine calls failed"
+                  sub="calls failed, not counted"
                 />
               )}
             </div>
@@ -161,7 +164,10 @@ export function MonitorView({
                     </th>
                   ))}
                   <th className="pb-2 text-right font-medium">Overall</th>
-                  <th className="pb-2" />
+                  <th className="pb-2 text-right font-medium">Failed calls</th>
+                  <th className="pb-2">
+                    <span className="sr-only">Details</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -174,33 +180,51 @@ export function MonitorView({
                         {r.mock && <MockBadge />}
                       </span>
                     </td>
-                    <td className="py-2 text-right">
-                      {r.stats.overall.measured}
-                      {r.stats.failed > 0 && (
-                        <span className="text-navy-300"> (+{r.stats.failed} failed)</span>
-                      )}
-                    </td>
+                    <td className="py-2 text-right tabular-nums">{r.stats.overall.measured}</td>
                     {chartEngines.map((e) => (
                       <td key={e} className="py-2 text-right">
                         {formatRate(r.stats.perEngine[e])}
                       </td>
                     ))}
-                    <td className="py-2 text-right font-medium">{formatRate(r.stats.overall)}</td>
+                    <td className="py-2 text-right font-semibold tabular-nums">
+                      {formatRate(r.stats.overall)}
+                    </td>
+                    <td
+                      className={
+                        r.stats.failed
+                          ? "py-2 text-right text-red-700 tabular-nums"
+                          : "py-2 text-right text-navy-300"
+                      }
+                    >
+                      {r.stats.failed}
+                    </td>
                     <td className="py-2 text-right">
                       <Link
                         href={`/dashboard/${brandId}/monitor/${r.id}`}
-                        className="text-accent-dark hover:underline"
+                        className="inline-flex min-h-11 items-center whitespace-nowrap font-semibold text-accent-dark hover:underline"
                       >
-                        View
+                        View answers
                       </Link>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            <p className="mt-3 text-xs text-navy-400">
+              Mention rate = answers that mention you ÷ answers received. Failed calls are never counted as
+              &ldquo;not mentioned&rdquo;. Interrupted runs are kept but not counted.
+            </p>
           </CardContent>
         </Card>
       )}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-navy-100 bg-white px-5 py-4">
+        <span className="font-semibold">Scheduled weekly monitoring</span>
+        <Badge variant="warn">Coming soon</Badge>
+        <span className="text-sm text-navy-400">
+          For now, run the monitor whenever you want fresh answers.
+        </span>
+      </div>
     </div>
   );
 }

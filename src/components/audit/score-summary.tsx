@@ -1,4 +1,9 @@
-import type { AuditBreakdown, CategoryKey, CategoryResult } from "@/lib/audit/types";
+import {
+  CATEGORY_TITLES,
+  type AuditBreakdown,
+  type CategoryKey,
+  type CategoryResult,
+} from "@/lib/audit/types";
 import { cn } from "@/lib/utils";
 
 export function scoreTone(score: number, max: number) {
@@ -7,6 +12,12 @@ export function scoreTone(score: number, max: number) {
 }
 
 const TONE_STROKE = { good: "stroke-accent", warn: "stroke-amber-500", bad: "stroke-red-500" } as const;
+/** Brighter strokes that read on the navy audit header. */
+const TONE_STROKE_DARK = {
+  good: "stroke-[#2BC4B0]",
+  warn: "stroke-amber-400",
+  bad: "stroke-red-400",
+} as const;
 
 /** `toneMax` sets the colour threshold — the points actually measured, which may be less than `max`. */
 export function ScoreRing({
@@ -14,11 +25,14 @@ export function ScoreRing({
   max = 100,
   toneMax = max,
   size = 140,
+  onDark = false,
 }: {
   score: number;
   max?: number;
   toneMax?: number;
   size?: number;
+  /** Light-on-navy colours for the audit header. */
+  onDark?: boolean;
 }) {
   const r = 52;
   const c = 2 * Math.PI * r;
@@ -30,8 +44,16 @@ export function ScoreRing({
       height={size}
       role="img"
       aria-label={`Score ${score} out of ${max}`}
+      className="shrink-0"
     >
-      <circle cx="60" cy="60" r={r} fill="none" strokeWidth="10" className="stroke-navy-50" />
+      <circle
+        cx="60"
+        cy="60"
+        r={r}
+        fill="none"
+        strokeWidth="10"
+        className={onDark ? "stroke-navy-600" : "stroke-navy-50"}
+      />
       <circle
         cx="60"
         cy="60"
@@ -41,12 +63,24 @@ export function ScoreRing({
         strokeLinecap="round"
         strokeDasharray={`${c * pct} ${c}`}
         transform="rotate(-90 60 60)"
-        className={TONE_STROKE[scoreTone(score, toneMax)]}
+        className={
+          onDark ? TONE_STROKE_DARK[scoreTone(score, toneMax)] : TONE_STROKE[scoreTone(score, toneMax)]
+        }
       />
-      <text x="60" y="58" textAnchor="middle" className="fill-navy text-[28px] font-semibold">
+      <text
+        x="60"
+        y="58"
+        textAnchor="middle"
+        className={cn("font-display text-[30px] font-bold", onDark ? "fill-white" : "fill-navy")}
+      >
         {score}
       </text>
-      <text x="60" y="78" textAnchor="middle" className="fill-navy-300 text-[11px]">
+      <text
+        x="60"
+        y="78"
+        textAnchor="middle"
+        className={cn("text-[11px]", onDark ? "fill-navy-200" : "fill-navy-300")}
+      >
         out of {max}
       </text>
     </svg>
@@ -88,6 +122,27 @@ export function ScoreHeadline({
         ? "AI answer engines can find you, but there are gaps holding you back."
         : "AI answer engines will struggle to find and recommend you right now.";
   return <p className={cn("text-lg font-medium text-navy", className)}>{text}</p>;
+}
+
+/** Short label for the audit header, judged like the headline against the points we could measure. */
+export function verdictLabel(score: number, measuredMax: number) {
+  const tone = scoreTone(score, measuredMax);
+  return tone === "good" ? "Mostly ready" : tone === "warn" ? "Partly ready" : "Not ready yet";
+}
+
+/**
+ * The site-side categories with the most points still to gain (live visibility
+ * is left out: there is no single site change that guarantees mentions).
+ * Every number is max − score from this audit, so "up to" is exact.
+ */
+export function biggestWins(breakdown: AuditBreakdown, count = 2) {
+  const wins = (Object.keys(breakdown) as CategoryKey[])
+    .filter((k) => k !== "live_visibility" && isMeasured(k, breakdown[k]) && breakdown[k].fix)
+    .map((k) => ({ key: k, title: CATEGORY_TITLES[k], gain: breakdown[k].max - breakdown[k].score }))
+    .filter((w) => w.gain > 0)
+    .sort((a, b) => b.gain - a.gain)
+    .slice(0, count);
+  return { wins, points: Math.round(wins.reduce((sum, w) => sum + w.gain, 0)) };
 }
 
 /** True when the audit's live-visibility points came from mock mode. */

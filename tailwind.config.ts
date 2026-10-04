@@ -12,7 +12,14 @@ const config: Config = {
         accent: siteConfig.colors.accent,
       },
       fontFamily: {
-        sans: ["ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)", "var(--font-devanagari)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: [
+          "var(--font-display)",
+          "var(--font-devanagari)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
       },
     },
   },

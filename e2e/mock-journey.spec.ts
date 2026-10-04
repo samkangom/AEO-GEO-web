@@ -62,13 +62,13 @@ test("monitor run stores labelled mock results and shows them everywhere", async
   await expect(page.getByText(/mock-openai/).first()).toBeVisible();
   await expect(page.getByText(/mock-anthropic/).first()).toBeVisible();
 
-  await page.getByRole("link", { name: "All runs" }).click();
+  await page.getByRole("link", { name: "Back to Monitor" }).click();
   await expect(
     page.getByRole("heading", { name: /Latest run/ }).getByTitle(/Simulated answers/),
   ).toBeVisible();
   await expect(page.getByText("Run history")).toBeVisible();
 
   await page.goto(brandUrl);
-  await expect(page.getByText("AI mention rate · latest run")).toBeVisible();
+  await expect(page.getByText("Mention rate, last run")).toBeVisible();
   await expect(page.getByTitle(/Simulated answers/).first()).toBeVisible();
 });

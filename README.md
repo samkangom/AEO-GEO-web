@@ -110,7 +110,7 @@ src/lib/supabase/           server/browser clients, session middleware, DB types
 src/app/(auth)/             login, signup
 src/app/auth/               OAuth/email callback, sign-out
 src/app/onboarding/         "Add your first brand"
-src/app/dashboard/          all-brands overview; per-brand tabs: Overview, Audit, Prompts,
+src/app/dashboard/          all-brands overview; per-brand sections (left sidebar): Overview, Audit, Prompts,
                             Monitor (+ run detail), Ads (coming soon), Settings; server actions
 src/components/*/…-view.tsx page views, kept separate from data loading so they can be previewed
 src/app/api/health/         deployment health check

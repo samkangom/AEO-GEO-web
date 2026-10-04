@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { isMockModel } from "@/lib/mock-mode";
 import { MockBadge } from "@/components/mock-badge";
-import { ArrowLeft, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { EngineId } from "@/lib/engines/types";
 import type { RunResult } from "@/lib/monitor/store";
 import { displayStatus, formatRate, summariseRun } from "@/lib/monitor/stats";
@@ -41,6 +41,11 @@ export function RunDetailView({
   results: RunResult[];
 }) {
   const stats = summariseRun(results);
+  const status = displayStatus(run);
+  const engineCount = Object.keys(stats.perEngine).length;
+  const seconds = run.finished_at
+    ? Math.max(1, Math.round((Date.parse(run.finished_at) - Date.parse(run.started_at)) / 1000))
+    : null;
   const byPrompt = new Map<string, RunResult[]>();
   for (const r of results) byPrompt.set(r.prompt_id, [...(byPrompt.get(r.prompt_id) ?? []), r]);
 
@@ -48,31 +53,44 @@ export function RunDetailView({
     <div className="space-y-6">
       <Link
         href={`/dashboard/${brandId}/monitor`}
-        className="inline-flex items-center gap-1 text-sm text-navy-400 hover:text-navy"
+        className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-accent-dark hover:text-navy"
       >
-        <ArrowLeft className="h-4 w-4" /> All runs
+        <ArrowLeft className="h-4 w-4" /> Back to Monitor
       </Link>
 
-      <Card>
-        <CardHeader className="gap-2">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-3">
-            <CardTitle>Run · {formatDate(run.started_at)}</CardTitle>
-            <RunStatusBadge status={displayStatus(run)} />
+            <h2 className="text-2xl font-bold md:text-3xl">Run of {formatDate(run.started_at)}</h2>
+            <RunStatusBadge status={status} />
             {run.mock && <MockBadge />}
           </div>
-          {run.mock && (
-            <p className="text-sm text-amber-800">
-              This run used mock mode: the answers below are simulated, not real AI results.
-            </p>
-          )}
-          <p className="text-sm text-navy-600">
-            Mentioned in {stats.overall.mentioned} of {stats.overall.measured} answers (
-            {formatRate(stats.overall)})
+          <p className="text-sm text-navy-400">
+            {byPrompt.size} prompt{byPrompt.size === 1 ? "" : "s"} × {engineCount} engine
+            {engineCount === 1 ? "" : "s"} · {stats.overall.measured} answer
+            {stats.overall.measured === 1 ? "" : "s"} · {stats.failed} failed call
+            {stats.failed === 1 ? "" : "s"}
+            {seconds !== null && ` · took ${seconds} s`}
             {Object.entries(stats.perEngine).map(([e, r]) => ` · ${LABELS[e as EngineId]} ${formatRate(r)}`)}
-            {stats.failed > 0 && ` · ${stats.failed} call${stats.failed === 1 ? "" : "s"} failed`}
           </p>
-        </CardHeader>
-      </Card>
+        </div>
+        <p className="ml-auto font-display text-3xl font-bold tabular-nums">
+          {formatRate(stats.overall)}{" "}
+          <span className="font-sans text-sm font-medium text-navy-400">mention rate</span>
+        </p>
+      </div>
+
+      {run.mock && (
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          This run used mock mode: the answers below are simulated, not real AI results.
+        </p>
+      )}
+      {status === "interrupted" && (
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          This run stopped before it finished. Its answers are shown here but not counted in your mention
+          rate.
+        </p>
+      )}
 
       {[...byPrompt.values()].map((rows) => {
         const prompt = rows[0].prompt;
@@ -98,18 +116,14 @@ export function RunDetailView({
                       {LABELS[r.engine]}
                     </span>
                     {r.error ? (
-                      <span className="inline-flex items-center gap-1 text-amber-700">
-                        <AlertTriangle className="h-4 w-4" /> Couldn&apos;t check: {r.error}
-                      </span>
+                      <>
+                        <Badge variant="bad">Call failed</Badge>
+                        <span className="text-navy-400">{r.error} · not counted</span>
+                      </>
                     ) : r.mentioned ? (
-                      <span className="inline-flex items-center gap-1 text-accent-dark">
-                        <CheckCircle2 className="h-4 w-4" /> Mentioned
-                        {r.position && ` · #${r.position} in its list`}
-                      </span>
+                      <Badge variant="good">Mentioned{r.position ? ` · #${r.position}` : ""}</Badge>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-red-600">
-                        <XCircle className="h-4 w-4" /> Not mentioned
-                      </span>
+                      <Badge variant="muted">Not mentioned</Badge>
                     )}
                     {r.cited && <Badge variant="good">Links to your site</Badge>}
                     {r.sentiment && (
@@ -124,8 +138,12 @@ export function RunDetailView({
                   </div>
                   {r.raw_response && (
                     <details className="mt-2 text-sm">
-                      <summary className="cursor-pointer select-none text-navy-400">Show answer</summary>
-                      <p className="mt-2 whitespace-pre-wrap text-navy-700">{readable(r.raw_response)}</p>
+                      <summary className="inline-flex min-h-8 cursor-pointer select-none items-center font-semibold text-accent-dark">
+                        Show answer
+                      </summary>
+                      <p className="mt-2 whitespace-pre-wrap rounded-lg bg-paper p-3.5 leading-relaxed text-navy-700">
+                        {readable(r.raw_response)}
+                      </p>
                       {r.citations.length > 0 && (
                         <ul className="mt-2 space-y-0.5 text-xs text-navy-400">
                           {r.citations.map((u) => (

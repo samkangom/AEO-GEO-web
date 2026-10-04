@@ -6,4 +6,10 @@
   body {
     @apply bg-paper text-navy antialiased;
   }
+  /* Headings use the display face everywhere, so pages don't each have to opt in. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
 }

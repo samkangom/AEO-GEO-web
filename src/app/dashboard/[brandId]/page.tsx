@@ -14,17 +14,18 @@ export default async function OverviewPage({ params }: { params: Promise<{ brand
   const brand = await getBrandOr404(brandId);
   const supabase = await createClient();
 
-  const [{ data: audit }, { data: prompts }, runs] = await Promise.all([
+  const [{ data: audits }, { data: prompts }, runs] = await Promise.all([
     supabase
       .from("audits")
       .select("overall_score, breakdown, created_at")
       .eq("brand_id", brand.id)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(2),
     supabase.from("prompts").select("active").eq("brand_id", brand.id),
     listRunsWithStats(supabase, brand.id),
   ]);
+
+  const [audit, previous] = audits ?? [];
 
   return (
     <OverviewView
@@ -37,6 +38,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ brand
               measuredMax: 100 - unmeasuredPoints(audit.breakdown as unknown as AuditBreakdown),
               mock: isMockAudit(audit.breakdown as unknown as AuditBreakdown),
               createdAt: audit.created_at,
+              previous: previous ? { score: previous.overall_score, createdAt: previous.created_at } : null,
             }
           : null
       }

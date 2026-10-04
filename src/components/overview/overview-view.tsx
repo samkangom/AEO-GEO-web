@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, Circle, Minus }
 import { ScoreHeadline, ScoreRing } from "@/components/audit/score-summary";
 import { MentionChart } from "@/components/monitor/mention-chart";
 import { RunStatusBadge } from "@/components/monitor/run-status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
 import type { EngineId } from "@/lib/engines/types";
@@ -19,10 +20,25 @@ const LABELS: Record<EngineId, string> = {
   perplexity: "Perplexity",
 };
 
+const ALL_ENGINES: EngineId[] = ["openai", "anthropic", "gemini", "perplexity"];
+
+/** "ChatGPT and Claude": the engines that answered (or failed) in this run. */
+function runEngineNames(run: RunWithStats) {
+  const names = (Object.keys(run.stats.perEngine) as EngineId[]).map((e) => LABELS[e]);
+  return names.length ? names.join(" and ") : "no engines";
+}
+
 export type OverviewProps = {
   brandId: string;
   brandName: string;
-  audit: { score: number; measuredMax: number; createdAt: string; mock?: boolean } | null;
+  audit: {
+    score: number;
+    measuredMax: number;
+    createdAt: string;
+    mock?: boolean;
+    /** The audit before this one, for the "up N since" line. */
+    previous?: { score: number; createdAt: string } | null;
+  } | null;
   activePrompts: number;
   totalPrompts: number;
   engines: EngineId[];
@@ -121,8 +137,15 @@ export function OverviewView({
             {audit ? (
               <>
                 <div className="flex items-center gap-4">
-                  <ScoreRing score={audit.score} toneMax={audit.measuredMax} size={96} />
-                  <ScoreHeadline score={audit.score} measuredMax={audit.measuredMax} className="text-sm" />
+                  <ScoreRing score={audit.score} toneMax={audit.measuredMax} size={104} />
+                  <div className="flex flex-col gap-1.5">
+                    <ScoreHeadline score={audit.score} measuredMax={audit.measuredMax} className="text-sm" />
+                    {audit.previous ? (
+                      <Delta points={audit.score - audit.previous.score} since={audit.previous.createdAt} />
+                    ) : (
+                      <p className="text-sm text-navy-400">First audit</p>
+                    )}
+                  </div>
                 </div>
                 {audit.measuredMax < 100 && (
                   <p className="text-xs text-navy-400">
@@ -148,14 +171,20 @@ export function OverviewView({
         <Card className="flex flex-col">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center justify-between gap-2">
-              AI mention rate · latest run {latestMeasured?.mock && <MockBadge />}
+              Mention rate, last run {latestMeasured?.mock && <MockBadge />}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-3">
             {latestMeasured ? (
               <>
-                <p className="text-4xl font-semibold text-navy">{formatRate(latestMeasured.stats.overall)}</p>
+                <p className="font-display text-5xl font-bold leading-none text-navy">
+                  {formatRate(latestMeasured.stats.overall)}
+                </p>
                 {delta && <Delta {...delta} />}
+                <p className="text-sm text-navy-400">
+                  {latestMeasured.stats.overall.mentioned} of {latestMeasured.stats.overall.measured} answers
+                  mention you
+                </p>
                 <ul className="space-y-1">
                   {chartEngines.map((e) => (
                     <li key={e} className="flex items-center gap-2 text-sm text-navy-600">
@@ -196,32 +225,24 @@ export function OverviewView({
             {latestRun ? (
               <>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium text-navy">{formatDate(latestRun.started_at)}</span>
+                  <span className="font-display text-xl font-bold text-navy">
+                    {formatDate(latestRun.started_at)}
+                  </span>
                   <RunStatusBadge status={latestRun.displayStatus} />
                 </div>
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <dt className="text-navy-400">Answers</dt>
-                  <dd className="text-right font-medium text-navy">
-                    {latestRun.stats.overall.measured}
-                    {latestRun.stats.failed > 0 && (
-                      <span className="font-normal text-navy-300"> (+{latestRun.stats.failed} failed)</span>
-                    )}
-                  </dd>
-                  <dt className="text-navy-400">Mentioned</dt>
-                  <dd className="text-right font-medium text-navy">{latestRun.stats.overall.mentioned}</dd>
-                  <dt className="text-navy-400">Linked to your site</dt>
-                  <dd className="text-right font-medium text-navy">{latestRun.stats.cited}</dd>
-                  <dt className="text-navy-400">Avg. position</dt>
-                  <dd className="text-right font-medium text-navy">
-                    {latestRun.stats.avgPosition ? `#${latestRun.stats.avgPosition.toFixed(1)}` : "—"}
-                  </dd>
-                </dl>
-                <p className="text-sm text-navy-400">
-                  Sentiment: <span className="text-navy">{latestRun.stats.sentiment.positive} positive</span>,{" "}
-                  {latestRun.stats.sentiment.neutral} neutral, {latestRun.stats.sentiment.negative} negative
+                <p className="text-sm text-navy-600">
+                  {latestRun.stats.overall.measured} answer{latestRun.stats.overall.measured === 1 ? "" : "s"}{" "}
+                  from {runEngineNames(latestRun)}
                 </p>
+                {latestRun.stats.failed > 0 ? (
+                  <p className="text-sm font-semibold text-red-700">
+                    {latestRun.stats.failed} call{latestRun.stats.failed === 1 ? "" : "s"} failed, not counted
+                  </p>
+                ) : (
+                  <p className="text-sm text-navy-400">No failed calls</p>
+                )}
                 <div className="mt-auto flex justify-end">
-                  <CardLink href={`${base}/monitor/${latestRun.id}`}>View run</CardLink>
+                  <CardLink href={`${base}/monitor/${latestRun.id}`}>Read the answers</CardLink>
                 </div>
               </>
             ) : (
@@ -248,6 +269,76 @@ export function OverviewView({
           </CardContent>
         </Card>
       )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">AI engines</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul>
+              {ALL_ENGINES.map((e) => {
+                const on = engines.includes(e);
+                return (
+                  <li
+                    key={e}
+                    className="flex min-h-11 items-center gap-2.5 border-b border-navy-50 last:border-0"
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ background: on ? siteConfig.colors.engines[e] : "#C9CCD3" }}
+                      aria-hidden
+                    />
+                    <span className={on ? "flex-1 text-navy" : "flex-1 text-navy-400"}>{LABELS[e]}</span>
+                    <Badge variant={on ? "good" : "muted"}>{on ? "Connected" : "Not configured"}</Badge>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-3 text-xs text-navy-400">
+              Engines without an API key are never scored or estimated.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">How you appear, last run</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {latestMeasured ? (
+              <dl>
+                <div className="flex min-h-11 items-center gap-3 border-b border-navy-50">
+                  <dt className="flex-1 text-sm text-navy-600">Average list position when mentioned</dt>
+                  <dd className="font-display text-2xl font-bold tabular-nums">
+                    {latestMeasured.stats.avgPosition
+                      ? `#${latestMeasured.stats.avgPosition.toFixed(1)}`
+                      : "—"}
+                  </dd>
+                </div>
+                <div className="flex min-h-11 items-center gap-3 border-b border-navy-50">
+                  <dt className="flex-1 text-sm text-navy-600">Answers that link to your site</dt>
+                  <dd className="font-display text-2xl font-bold tabular-nums">
+                    {latestMeasured.stats.cited}
+                  </dd>
+                </div>
+                <div className="flex min-h-11 flex-wrap items-center gap-3">
+                  <dt className="flex-1 text-sm text-navy-600">Sentiment when mentioned</dt>
+                  <dd className="flex flex-wrap gap-1.5">
+                    <Badge variant="good">{latestMeasured.stats.sentiment.positive} positive</Badge>
+                    <Badge variant="muted">{latestMeasured.stats.sentiment.neutral} neutral</Badge>
+                    {latestMeasured.stats.sentiment.negative > 0 && (
+                      <Badge variant="bad">{latestMeasured.stats.sentiment.negative} negative</Badge>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="text-sm text-navy-400">Appears after your first monitor run.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
