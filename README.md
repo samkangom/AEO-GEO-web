@@ -1,6 +1,6 @@
 # ClearCite
 
-AI visibility (AEO/GEO) for Indian B2B brands: find out whether ChatGPT, Claude, Gemini and Perplexity mention and recommend your brand, and fix it when they don't.
+AI visibility (AEO/GEO) for Indian brands and organisations (B2B businesses first, but any website works, including political parties, nonprofits and government bodies): find out whether ChatGPT, Claude, Gemini and Perplexity mention and recommend your brand, and fix it when they don't.
 
 > The product name lives in one place, `src/config/site.ts`, together with the colour palette that Tailwind reads and the contact email used by every "Contact us" button (currently a placeholder, `hello@clearcite.in`). Plans and INR prices live in `src/config/pricing.ts`.
 

@@ -89,6 +89,10 @@ const FAQ = [
     a: "Yes. We write the test questions in English and in Hindi or Hinglish — the way your buyers actually type — and check local questions for Indian cities.",
   },
   {
+    q: "Is it only for businesses?",
+    a: "No. It started with B2B brands, but you can track any website: a political party, a nonprofit, a government body or any other organisation. Choose the type when you add it. Checks that don't apply, like public pricing, are marked “not applicable” and cost no points, and the test questions are written for that audience. For political parties they stay neutral and never ask an AI who to vote for.",
+  },
+  {
     q: "Is the audit really free?",
     a: "Yes. Create an account, add your website and get your AI-readiness score. No card needed.",
   },
@@ -141,7 +145,7 @@ export default function HomePage() {
       <section className="container grid items-center gap-12 py-16 md:py-24 lg:grid-cols-[1.1fr_1fr]">
         <div className="space-y-6">
           <p className="inline-flex items-center gap-2 rounded-full bg-accent-light px-3 py-1 text-xs font-medium text-accent-dark">
-            AI visibility for Indian B2B brands
+            AI visibility for Indian brands and organisations
           </p>
           <h1 className="text-4xl font-semibold leading-tight tracking-tight text-navy sm:text-5xl">
             Is ChatGPT recommending your brand — or your competitor?

@@ -101,6 +101,14 @@ export function unmeasuredPoints(breakdown: AuditBreakdown) {
  */
 export function isMeasured(key: CategoryKey, result: CategoryResult) {
   if (result.status === "ok") return true;
+  // Homepage didn't load: these checks never ran, whatever the status says.
+  if (key === "structured_data" || key === "content_signals") {
+    if (
+      result.detail?.homepage_unreachable === true ||
+      (result.status === "error" && "reason" in (result.detail ?? {}))
+    )
+      return false;
+  }
   return result.status === "error" && key !== "live_visibility";
 }
 

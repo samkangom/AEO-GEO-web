@@ -11,7 +11,7 @@ Manual checks for each release, grouped by feature. The ID goes in bug reports a
 | well-optimised | http://127.0.0.1:4004 | **60** (25 / 20 / 15, live visibility not configured) | All checks pass. GPTBot is blocked, which must not cost points. |
 | minimal | http://127.0.0.1:4002 | **42** (25 / 10 / 7) | No robots.txt (counts as allowed), LocalBusiness schema only, prices on the homepage. |
 | blocked-bots | http://127.0.0.1:4001 | **0** | `Disallow: /` for all bots, JavaScript-only page. |
-| server-errors | http://127.0.0.1:4003 | **0**, and cards say "Couldn't check" | robots.txt returns 503, homepage returns 403. |
+| server-errors | http://127.0.0.1:4003 | **No score** (stored as 0). Cards say "Couldn't check" / "Not measured". | robots.txt returns 503, homepage returns 403. |
 
 These scores assume **no AI keys**, which makes Live AI visibility "Not configured" with "—" and no score. With keys set, the live check really asks ChatGPT and Claude about each fixture brand. The brands are fictional, so expect ~0 live points and roughly a minute per audit.
 
@@ -66,7 +66,8 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | AUD-7 | Real-site smoke: audit 3 real Indian B2B sites, e.g. razorpay.com, zoho.com/crm, a small local business. | Completes in under ~15 s. The results look plausible when compared to the site's actual robots.txt and page source. |
 | AUD-8 | Mobile width (375 px). | Cards stack and nothing overflows horizontally. Long URLs wrap. |
 | AUD-9 | Add `inc.in` as **Political party** with other names `INC, Congress party`. | "Public pricing" and "Product or Service schema" show ⓘ "Not applicable for a political party, so no points are lost". Summary says "(x of 3)". Fixes don't mention prices or buyers. On 4 Oct 2026, site checks scored 37 of the 60 measurable points. |
-| AUD-10 | Add `www.bjp.org` as **Political party**. | From a cloud server the site answered HTTP 503 to every request on 4 Oct 2026, so the site cards show "Couldn't check" with the 503 reason. From an office network it may load. |
+| AUD-10 | Add `www.bjp.org` as **Political party**. | From a cloud server the site answered HTTP 503 to every request on 4 Oct 2026. The audit header says "We couldn't load this website, so there's no score". Overview and All brands show "No score", not 0. From an office network the site may load and be scored normally. |
+| AUD-13 | Audit history with one unreachable audit between two scored ones. | That row says "No score". The change column compares the scored audits either side of it. |
 | AUD-11 | Change a brand's type to Political party in Settings, then regenerate prompts (needs Claude). | Questions are neutral and informational (positions, manifestos, funding, local offices). None asks who to vote for, and none contains the party's name or other names. The pricing group is labelled "Funding & membership". |
 | AUD-12 (auto) | Other names. | An answer with "BJP" counts for a brand with other name `BJP`. "Acme Inc." doesn't count for other name `INC`. |
 

@@ -49,7 +49,7 @@ export const plans: Plan[] = [
     id: "growth",
     name: "Growth",
     priceInr: 7999,
-    tagline: "For growing B2B teams.",
+    tagline: "For growing teams and organisations.",
     features: [
       { text: "Up to 5 brands" },
       { text: "Up to 100 tracked prompts" },

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { isMockAudit, unmeasuredPoints } from "@/components/audit/score-summary";
 import { OverviewView } from "@/components/overview/overview-view";
 import { getBrandOr404 } from "@/lib/brands";
-import type { AuditBreakdown } from "@/lib/audit/types";
+import { isSiteUnreachable, type AuditBreakdown } from "@/lib/audit/types";
 import { configuredEngines } from "@/lib/engines";
 import { listRunsWithStats } from "@/lib/monitor/store";
 import { createClient } from "@/lib/supabase/server";
@@ -37,8 +37,13 @@ export default async function OverviewPage({ params }: { params: Promise<{ brand
               score: audit.overall_score,
               measuredMax: 100 - unmeasuredPoints(audit.breakdown as unknown as AuditBreakdown),
               mock: isMockAudit(audit.breakdown as unknown as AuditBreakdown),
+              noScore: isSiteUnreachable(audit.breakdown as unknown as AuditBreakdown),
               createdAt: audit.created_at,
-              previous: previous ? { score: previous.overall_score, createdAt: previous.created_at } : null,
+              // No "up N since" across an audit that couldn't load the site.
+              previous:
+                previous && !isSiteUnreachable(previous.breakdown as unknown as AuditBreakdown)
+                  ? { score: previous.overall_score, createdAt: previous.created_at }
+                  : null,
             }
           : null
       }

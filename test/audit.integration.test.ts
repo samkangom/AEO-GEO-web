@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { after, before, describe, test } from "node:test";
 import { runAudit } from "@/lib/audit";
+import { isSiteUnreachable } from "@/lib/audit/types";
 import { serveSite } from "./fixture-server";
 
 process.env.AUDIT_ALLOW_PRIVATE_HOSTS = "1";
@@ -68,6 +69,9 @@ withSite("server-errors", (siteUrl) => {
     assert.equal(breakdown.structured_data.status, "error");
     assert.match(breakdown.structured_data.summary, /HTTP 403/);
     assert.equal(overallScore, 0);
+    // The homepage never loaded, so the app shows "No score" instead of 0/100.
+    assert.equal(isSiteUnreachable(breakdown), true);
+    assert.equal(breakdown.structured_data.detail.homepage_unreachable, true);
   });
 });
 

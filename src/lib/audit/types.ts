@@ -33,6 +33,19 @@ export type CategoryResult = {
 
 export type AuditBreakdown = Record<CategoryKey, CategoryResult>;
 
+/**
+ * True when the audit couldn't load the site's homepage at all (bot
+ * protection, server error, not a web page). The app then shows no score:
+ * the block may only affect automated checkers like ours, so a 0 would be
+ * misleading. Older audits are recognised by both homepage checks erroring.
+ */
+export function isSiteUnreachable(breakdown: AuditBreakdown) {
+  const { structured_data: sd, content_signals: cs } = breakdown;
+  if (!sd || !cs) return false;
+  if (sd.detail?.homepage_unreachable === true) return true;
+  return sd.status === "error" && cs.status === "error" && "reason" in (sd.detail ?? {});
+}
+
 export const CATEGORY_MAX: Record<CategoryKey, number> = {
   crawl_access: 25,
   structured_data: 20,

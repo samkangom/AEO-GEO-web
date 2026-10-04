@@ -7,7 +7,7 @@ import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `${siteConfig.name} plans in INR: a free AI-readiness audit, then monitoring from ₹1,999/month for Indian B2B brands and agencies.`,
+  description: `${siteConfig.name} plans in INR: a free AI-readiness audit, then monitoring from ₹1,999/month for Indian brands, organisations and agencies.`,
   alternates: { canonical: "/pricing" },
 };
 

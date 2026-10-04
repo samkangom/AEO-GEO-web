@@ -12,7 +12,7 @@
  */
 import { loadEnvConfig } from "@next/env";
 import { runAudit, type AuditOptions } from "@/lib/audit";
-import { CATEGORY_ORDER, CATEGORY_TITLES } from "@/lib/audit/types";
+import { CATEGORY_ORDER, CATEGORY_TITLES, isSiteUnreachable } from "@/lib/audit/types";
 import { isOrgKind, ORG_KINDS } from "@/lib/org-kind";
 import { normaliseSiteUrl } from "@/lib/url";
 
@@ -58,7 +58,10 @@ async function main(url: string) {
     if (json) {
       console.log(JSON.stringify(result, null, 2));
     } else {
-      console.log(`\n${url} — ${result.overallScore}/100  (${Date.now() - started} ms)\n`);
+      const score = isSiteUnreachable(result.breakdown)
+        ? "No score (couldn't load the homepage)"
+        : `${result.overallScore}/100`;
+      console.log(`\n${url} — ${score}  (${Date.now() - started} ms)\n`);
       for (const key of CATEGORY_ORDER) {
         const c = result.breakdown[key];
         console.log(`${CATEGORY_TITLES[key]}: ${c.score}/${c.max}  [${c.status}]`);

@@ -49,8 +49,8 @@ function unreachableHomepage(max: number, reason: string, fixTarget: string): Ca
     status: "error",
     summary: `We couldn't load your homepage (${reason}), so we couldn't check this.`,
     checks: [],
-    fix: `Make sure ${fixTarget} loads for automated visitors. If a firewall or bot protection is blocking us, it's probably blocking AI crawlers too.`,
-    detail: { reason },
+    fix: `Make sure ${fixTarget} loads for automated visitors. If a firewall or bot protection is blocking us, it may be blocking AI crawlers too.`,
+    detail: { reason, homepage_unreachable: true },
   };
 }
 

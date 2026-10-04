@@ -196,7 +196,11 @@ async function main() {
           overall_score: result.overallScore,
           breakdown: result.breakdown,
         });
-        console.log(`✔ ${def.name}: real site audit ${result.overallScore}/100 (AI answers not run)`);
+        const { isSiteUnreachable } = await import("@/lib/audit/types");
+        const score = isSiteUnreachable(result.breakdown)
+          ? "no score (homepage didn't load)"
+          : `${result.overallScore}/100`;
+        console.log(`✔ ${def.name}: real site audit, ${score} (AI answers not run)`);
       } catch (e) {
         console.log(`· ${def.name}: added without an audit (${e instanceof Error ? e.message : e})`);
       }

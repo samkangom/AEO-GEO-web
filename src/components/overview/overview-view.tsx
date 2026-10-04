@@ -36,6 +36,8 @@ export type OverviewProps = {
     measuredMax: number;
     createdAt: string;
     mock?: boolean;
+    /** The homepage couldn't be loaded, so the audit has no score. */
+    noScore?: boolean;
     /** The audit before this one, for the "up N since" line. */
     previous?: { score: number; createdAt: string } | null;
   } | null;
@@ -134,7 +136,19 @@ export function OverviewView({
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-3">
-            {audit ? (
+            {audit?.noScore ? (
+              <>
+                <p className="font-display text-2xl font-bold text-navy">No score</p>
+                <p className="text-sm text-navy-600">
+                  We couldn&apos;t load this website in the last audit, often because of bot protection.
+                  Nothing is estimated.
+                </p>
+                <div className="mt-auto flex items-center justify-between gap-2">
+                  <span className="text-xs text-navy-300">{formatDate(audit.createdAt)}</span>
+                  <CardLink href={`${base}/audit`}>See what happened</CardLink>
+                </div>
+              </>
+            ) : audit ? (
               <>
                 <div className="flex items-center gap-4">
                   <ScoreRing score={audit.score} toneMax={audit.measuredMax} size={104} />

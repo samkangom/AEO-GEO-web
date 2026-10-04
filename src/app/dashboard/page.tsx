@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isMockAudit, unmeasuredPoints } from "@/components/audit/score-summary";
 import { BrandsGrid, type BrandSummary } from "@/components/overview/brands-grid";
-import type { AuditBreakdown } from "@/lib/audit/types";
+import { isSiteUnreachable, type AuditBreakdown } from "@/lib/audit/types";
 import { listBrands } from "@/lib/brands";
 import { listRunsWithStats } from "@/lib/monitor/store";
 import { createClient } from "@/lib/supabase/server";
@@ -38,6 +38,7 @@ export default async function DashboardIndex() {
               score: audit.overall_score,
               measuredMax: 100 - unmeasuredPoints(audit.breakdown as unknown as AuditBreakdown),
               mock: isMockAudit(audit.breakdown as unknown as AuditBreakdown),
+              noScore: isSiteUnreachable(audit.breakdown as unknown as AuditBreakdown),
             }
           : null,
         mention: measured

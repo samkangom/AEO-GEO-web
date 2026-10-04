@@ -12,7 +12,7 @@ export type BrandSummary = {
   id: string;
   name: string;
   url: string;
-  audit: { score: number; measuredMax: number; mock?: boolean } | null;
+  audit: { score: number; measuredMax: number; mock?: boolean; noScore?: boolean } | null;
   mention: { rate: Rate; date: string; mock?: boolean } | null;
 };
 
@@ -43,7 +43,16 @@ export function BrandsGrid({ brands }: { brands: BrandSummary[] }) {
           >
             <Card className="h-full transition-shadow group-hover:shadow-md">
               <CardContent className="flex items-center gap-4 p-5">
-                {b.audit ? (
+                {b.audit?.noScore ? (
+                  <div
+                    className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full border-[6px] border-navy-50 text-center text-[11px] font-semibold leading-tight text-navy-400"
+                    title="We couldn't load this website, so there's no score"
+                  >
+                    No
+                    <br />
+                    score
+                  </div>
+                ) : b.audit ? (
                   <ScoreRing score={b.audit.score} toneMax={b.audit.measuredMax} size={72} />
                 ) : (
                   <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full border-2 border-dashed border-navy-100 text-xs text-navy-300">
