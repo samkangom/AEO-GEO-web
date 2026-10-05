@@ -37,7 +37,7 @@ export function BrandSettingsForm({ brand }: { brand: Brand }) {
         />
       </div>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state?.ok && <p className="text-sm text-accent-dark">Saved.</p>}
+      {state?.ok && <p className="text-sm text-accent-dark">Saved. The next audit uses these settings.</p>}
       <Button type="submit" disabled={pending}>
         {pending ? "Saving…" : "Save changes"}
       </Button>

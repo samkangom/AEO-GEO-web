@@ -28,7 +28,24 @@ export function BrandForm() {
         <Input id="url" name="url" placeholder="acmebilling.in" required inputMode="url" disabled={pending} />
       </div>
       <OrgFields disabled={pending} />
+      <div className="space-y-2">
+        <Label htmlFor="industry">
+          Industry{" "}
+          <span className="font-normal text-navy-300">(optional — helps generate better prompts)</span>
+        </Label>
+        <Input
+          id="industry"
+          name="industry"
+          placeholder="e.g. GST billing software for retailers"
+          maxLength={80}
+          disabled={pending}
+        />
+      </div>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      <p className="text-xs text-navy-400">
+        Live checks run only on AI engines with an API key. Engines without one show “Not configured”, never
+        an estimate.
+      </p>
       <Button type="submit" variant="accent" className="w-full" disabled={pending}>
         {pending
           ? "Checking your site and asking AI engines… (up to a minute)"

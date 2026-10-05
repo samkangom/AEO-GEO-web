@@ -66,24 +66,28 @@ const starterGst = Math.round(starter.priceInr * 0.18);
 
 const FAQ = [
   {
+    q: "Is the free audit really free?",
+    a: "Yes. One brand, one full audit, no card. You see the same score and fixes a paid customer sees.",
+  },
+  {
     q: "Can I pay online?",
-    a: `Not yet. Start with the free audit; for paid plans, contact us and we'll set you up directly with a GST invoice in INR.`,
+    a: "Not yet. While we’re early, we set up paid plans personally. Write to us and we’ll set up your plan and send a GST invoice in INR.",
   },
   {
     q: "Do prices include GST?",
-    a: `No. Prices are per month in Indian rupees; 18% GST is added to the invoice. For example, ${starter.name} is ${formatInr(starter.priceInr)} + ${formatInr(starterGst)} GST = ${formatInr(starter.priceInr + starterGst)} a month.`,
+    a: `No. Prices are shown before 18% GST, and every invoice carries your GSTIN. For example, ${starter.name} is ${formatInr(starter.priceInr)} + ${formatInr(starterGst)} GST = ${formatInr(starter.priceInr + starterGst)} a month.`,
   },
   {
     q: "Which AI engines do you check?",
-    a: "ChatGPT and Claude today, with web search switched on — the way buyers use them. Gemini and Perplexity are on the way.",
+    a: "ChatGPT and Claude, with web search on. Gemini and Perplexity are coming soon. Until then they show “Not configured”, never an estimate.",
   },
   {
     q: "What counts as a “prompt”?",
-    a: "A question a buyer might ask an AI assistant, such as “best GST billing software for kirana shops in Pune”. We write them for you in English, Hindi and Hinglish, and you can edit them.",
+    a: "One buyer question, like “best GST billing software for kirana stores”. Each monitor run asks every active prompt to every connected AI engine. We write them for you in English, Hindi and Hinglish, and you can edit them or add your own.",
   },
   {
-    q: "I run an agency. Can I manage clients' brands?",
-    a: "Yes. One account can hold several brands, with an all-brands view. The Agency plan is built for this, and we're building a partner programme for agencies in India's metros.",
+    q: "I run an agency. Can I manage clients’ brands?",
+    a: "Yes. The Agency plan covers up to 25 brands, businesses or other organisations, with an all-brands dashboard.",
   },
 ];
 

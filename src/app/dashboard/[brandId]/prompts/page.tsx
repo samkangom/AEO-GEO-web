@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { setAllPromptsActive } from "@/app/dashboard/prompt-actions";
+import { AddPromptForm } from "@/components/prompts/add-prompt-form";
 import { GeneratePromptsButton } from "@/components/prompts/generate-button";
 import { PromptRow } from "@/components/prompts/prompt-row";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,8 @@ export default async function PromptsPage({ params }: { params: Promise<{ brandI
               The questions we ask AI engines to see whether they recommend {brand.name}. They&apos;re written
               the way your buyers type — in English and Hindi/Hinglish — and never include your brand name.
               Edit any prompt, then activate the ones you want monitored.
+              {brand.kind === "political_party" &&
+                " Questions for parties stay neutral and never ask an AI who to vote for."}
             </CardDescription>
             {prompts.length > 0 && (
               <p className="text-sm text-navy-400">
@@ -96,6 +99,8 @@ export default async function PromptsPage({ params }: { params: Promise<{ brandI
             </Card>
           );
         })}
+
+      <AddPromptForm brandId={brand.id} kind={brand.kind} />
     </div>
   );
 }

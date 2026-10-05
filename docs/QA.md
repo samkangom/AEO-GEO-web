@@ -74,6 +74,8 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | AUD-14 (auto) | A homepage that shows ₹ figures that aren't prices (for example "Ad-GMV ₹ 0.0 Cr", "₹40 crore ad spend"). | Doesn't count as public pricing. "Plans from ₹499/month" or "pumps from Rs. 8,500" still count. |
 | AUD-15 (auto) | A homepage whose text starts at `opacity:0` (scroll animations). With 40% or more of the words hidden, Content signals shows ✘ "Your homepage text is visible without waiting for animations … Not scored". | The score is unchanged. trailytics.ai showed about 75% hidden on 5 Oct 2026. |
 | AUD-16 | Audit a brand twice or more. | The header says "Since your first audit on <date>: A → B (+N)". It isn't shown when either audit couldn't load the site. |
+| AUD-17 (auto) | Audit a site whose homepage can't be loaded (the `server-errors` fixture, or bjp.org from a cloud server). | Live AI visibility shows "Not measured": the audit stopped before the live check, so no AI calls are made. |
+| AUD-18 | Add a brand with Industry filled in, and type "Political party". | The brand header shows "site · Political party". For a business with an industry, it shows the industry. All brands shows "site · type" on each card. |
 | AUD-11 | Change a brand's type to Political party in Settings, then regenerate prompts (needs Claude). | Questions are neutral and informational (positions, manifestos, funding, local offices). None asks who to vote for, and none contains the party's name or other names. The pricing group is labelled "Funding & membership". |
 | AUD-12 (auto) | Other names. | An answer with "BJP" counts for a brand with other name `BJP`. "Acme Inc." doesn't count for other name `INC`. |
 
@@ -97,6 +99,7 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | PR-4 | "Activate all" / "Deactivate all". | Counts and badges update. |
 | PR-5 (auto) | No Anthropic key. | "Prompt generation is not configured" and the button is disabled. |
 | PR-6 | Activate prompts, then re-run the audit. | The live check prefers active prompts. The prompt text on the audit card matches. |
+| PR-7 (auto, mock journey) | On Prompts, type your own question in "Add your own prompt", choose an intent and click "Add prompt". | It's saved as Active in that intent's group, and "N of M active" goes up. Hindi script is labelled Hindi, Roman-script Hindi (two or more Hindi words) Hinglish, everything else English. A question with the brand name or one of its other names is refused, and so is a duplicate. Editing a prompt re-detects its language. |
 
 ## Dashboard & navigation
 

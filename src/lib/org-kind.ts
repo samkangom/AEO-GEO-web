@@ -16,6 +16,15 @@ export const ORG_KIND_LABELS: Record<OrgKind, string> = {
   other: "Other organisation",
 };
 
+/** Compact labels for cards and headers. */
+export const ORG_KIND_SHORT: Record<OrgKind, string> = {
+  business: "Business",
+  political_party: "Political party",
+  nonprofit: "Nonprofit",
+  government: "Government body",
+  other: "Organisation",
+};
+
 /** Lower-case noun for sentences: "not applicable for a political party". */
 export const ORG_KIND_NOUN: Record<OrgKind, string> = {
   business: "business",

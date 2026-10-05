@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MockBadge } from "@/components/mock-badge";
 import { Plus } from "lucide-react";
 import { ScoreRing } from "@/components/audit/score-summary";
+import { ORG_KIND_SHORT, type OrgKind } from "@/lib/org-kind";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRate, type Rate } from "@/lib/monitor/stats";
@@ -12,6 +13,8 @@ export type BrandSummary = {
   id: string;
   name: string;
   url: string;
+  /** Shown next to the site so agencies can tell businesses and other organisations apart. */
+  kind?: OrgKind;
   audit: { score: number; measuredMax: number; mock?: boolean; noScore?: boolean } | null;
   mention: { rate: Rate; date: string; mock?: boolean } | null;
 };
@@ -64,7 +67,10 @@ export function BrandsGrid({ brands }: { brands: BrandSummary[] }) {
                     <span className="truncate">{b.name}</span>
                     {(b.audit?.mock || b.mention?.mock) && <MockBadge />}
                   </p>
-                  <p className="truncate text-xs text-navy-400">{displayHost(b.url)}</p>
+                  <p className="truncate text-xs text-navy-400">
+                    {displayHost(b.url)}
+                    {b.kind && ` · ${ORG_KIND_SHORT[b.kind]}`}
+                  </p>
                   <p className="text-sm text-navy-600">
                     {b.mention ? (
                       <>

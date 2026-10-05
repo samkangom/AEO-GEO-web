@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { log } from "@/lib/log";
 import { generateAndSavePrompts, latestSiteInfo, listPrompts, regenerateDrafts } from "@/lib/prompts/store";
-import { PromptsUnavailableError } from "@/lib/prompts/types";
+import { detectLanguage } from "@/lib/prompts/language";
+import { INTENTS, PromptsUnavailableError } from "@/lib/prompts/types";
 import { createClient } from "@/lib/supabase/server";
 import { mentionsBrand } from "@/lib/visibility/analyze";
 import type { FormState } from "./actions";
@@ -67,7 +68,7 @@ export async function updatePromptText(_prev: FormState, formData: FormData): Pr
 
   const { data, error } = await supabase
     .from("prompts")
-    .update({ text: parsed.data })
+    .update({ text: parsed.data, language: detectLanguage(parsed.data) })
     .eq("id", promptId)
     .eq("brand_id", brand.id)
     .select("id");
@@ -102,4 +103,49 @@ export async function setAllPromptsActive(formData: FormData) {
   const { error } = await supabase.from("prompts").update({ active }).eq("brand_id", brand.id);
   if (error) log.error("prompts.toggle_all_failed", error, { brandId });
   revalidatePath(`/dashboard/${brandId}/prompts`);
+}
+
+/** Most prompts one brand can hold, generated and added together. */
+const MAX_PROMPTS_PER_BRAND = 100;
+
+/** A prompt the user writes. Saved active, with its language detected; never one that names the brand. */
+export async function addPrompt(_prev: FormState, formData: FormData): Promise<FormState> {
+  const brandId = String(formData.get("brandId"));
+  const parsed = textSchema.safeParse(formData.get("text"));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const intent = String(formData.get("intent"));
+  if (!(INTENTS as readonly string[]).includes(intent))
+    return { error: "Choose what kind of question it is." };
+
+  const { supabase, brand } = await requireBrand(brandId);
+  if (!brand) return { error: "Brand not found." };
+  if (mentionsBrand(parsed.data, brand)) {
+    return {
+      error: `Leave “${brand.name}”${brand.aliases?.length ? " and its other names" : ""} out of the prompt — we're measuring whether AI brings you up on its own.`,
+    };
+  }
+
+  const existing = await listPrompts(supabase, brand.id);
+  if (existing.some((p) => p.text.trim().toLowerCase() === parsed.data.toLowerCase())) {
+    return { error: "You already track this question." };
+  }
+  if (existing.length >= MAX_PROMPTS_PER_BRAND) {
+    return {
+      error: `A brand can hold up to ${MAX_PROMPTS_PER_BRAND} prompts. Remove or edit an old one first.`,
+    };
+  }
+
+  const { error } = await supabase.from("prompts").insert({
+    brand_id: brand.id,
+    text: parsed.data,
+    intent: intent as (typeof INTENTS)[number],
+    language: detectLanguage(parsed.data),
+    active: true,
+  });
+  if (error) {
+    log.error("prompts.add_failed", error, { brandId });
+    return { error: "We couldn't save that prompt." };
+  }
+  revalidatePath(`/dashboard/${brandId}/prompts`);
+  return { ok: true };
 }

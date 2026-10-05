@@ -36,25 +36,25 @@ const CHECKS = [
     icon: MessageSquareText,
     title: "Live AI visibility",
     points: CATEGORY_MAX.live_visibility,
-    body: "We ask ChatGPT and Claude, with web search on, the questions your buyers ask — and check whether your brand shows up in the answer.",
+    body: "We ask ChatGPT and Claude, with web search on, the questions your buyers ask, and check whether you show up.",
   },
   {
     icon: Bot,
     title: "AI crawler access",
     points: CATEGORY_MAX.crawl_access,
-    body: "Can the bots behind ChatGPT search, Claude and Perplexity read your site? Blocking model-training bots is your call — it never costs points.",
+    body: "Can the bots behind ChatGPT search, Claude and Perplexity read your site? Blocking model-training bots is your call and never costs points.",
   },
   {
     icon: FileCode2,
     title: "Structured data",
     points: CATEGORY_MAX.structured_data,
-    body: "Machine-readable facts about your company, products and FAQs, so AI tools describe you correctly.",
+    body: "Machine-readable facts about who you are and what you offer, so AI tools describe you correctly.",
   },
   {
     icon: ScrollText,
     title: "Content signals",
     points: CATEGORY_MAX.content_signals,
-    body: "An About page, answers to common questions, public pricing and a clear description — the basics AI answers lean on.",
+    body: "An About page, answers to common questions, public pricing (for businesses) and a clear description. Checks that don’t apply cost no points.",
   },
 ];
 
@@ -79,27 +79,27 @@ const STEPS = [
 const FAQ = [
   {
     q: "What is AEO or GEO?",
-    a: "Answer engine optimisation (AEO), also called generative engine optimisation (GEO), is making sure AI assistants like ChatGPT, Claude, Gemini and Perplexity can find your business, understand it, and recommend it when buyers ask.",
+    a: "Answer engine optimisation (AEO), also called generative engine optimisation (GEO), is making sure AI assistants like ChatGPT and Claude can find you, understand you, and recommend you when people ask.",
   },
   {
     q: "How is this different from SEO?",
-    a: "SEO tracks where you rank in a list of links. AI assistants write one answer and mention a few brands — or none. We measure whether you're one of them, and what's stopping you.",
+    a: "SEO tracks where you rank in a list of links. AI assistants write one answer and mention a few names, or none. We measure whether you're one of them and what's stopping you.",
   },
   {
     q: "Are the results real?",
-    a: "Yes. Every visibility number comes from a real question asked to a real AI engine, and you can read the full answer behind it. If an engine can't be reached, we say so instead of guessing.",
+    a: "Yes. Every visibility number comes from a real question asked to a real AI engine, and you can read the full answer behind it. Engines without an API key show “Not configured”, never an estimate.",
   },
   {
     q: "Do you support Hindi?",
-    a: "Yes. We write the test questions in English and in Hindi or Hinglish — the way your buyers actually type — and check local questions for Indian cities.",
+    a: "Yes. Questions can be written in English, Hindi or Hinglish, and we check local questions for Indian cities.",
   },
   {
     q: "Is it only for businesses?",
-    a: "No. It started with B2B brands, but you can track any website: a political party, a nonprofit, a government body or any other organisation. Choose the type when you add it. Checks that don't apply, like public pricing, are marked “not applicable” and cost no points, and the test questions are written for that audience. For political parties they stay neutral and never ask an AI who to vote for.",
+    a: "No. Any website works, including political parties, nonprofits and government bodies. Checks that don’t apply, like public pricing, are “not applicable” and cost no points. Questions for parties stay neutral and never ask an AI who to vote for.",
   },
   {
     q: "Is the audit really free?",
-    a: "Yes. Create an account, add your website and get your AI-readiness score. No card needed.",
+    a: "Yes. One brand, one full audit, no card needed. You get the same score and fixes a paid customer sees.",
   },
 ];
 
@@ -275,20 +275,22 @@ export default function HomePage() {
       <section className="bg-navy py-16 text-white md:py-20">
         <div className="container grid gap-10 lg:grid-cols-[1fr_1.4fr]">
           <div className="space-y-3">
-            <h2 className="text-3xl font-semibold tracking-tight">Built for how India buys</h2>
-            <p className="text-navy-200">Your buyers don&apos;t all search in English, and neither do we.</p>
+            <h2 className="text-3xl font-semibold tracking-tight">Built for how India asks</h2>
+            <p className="text-navy-200">
+              Your buyers and citizens don&apos;t all search in English. Neither do we.
+            </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             {[
               {
                 icon: Languages,
                 title: "English, Hindi & Hinglish",
-                body: "Test questions written the way your buyers actually type them.",
+                body: "Questions written the way people type them: “kirana dukaan ke liye best billing app”, or “सबसे अच्छा बिलिंग ऐप”.",
               },
               {
                 icon: MapPin,
-                title: "Local questions",
-                body: "“Best supplier in Pune”, “top CRM in Bengaluru” — the city-level questions that drive leads.",
+                title: "City-level questions",
+                body: "“Best supplier in Pune”, “top CRM in Bengaluru”. The local questions that drive leads.",
               },
               {
                 icon: ScrollText,

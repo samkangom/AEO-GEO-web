@@ -33,6 +33,7 @@ export default async function DashboardIndex() {
         id: b.id,
         name: b.name,
         url: b.url,
+        kind: b.kind,
         audit: audit
           ? {
               score: audit.overall_score,

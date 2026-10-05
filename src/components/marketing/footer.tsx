@@ -55,7 +55,7 @@ export function MarketingFooter() {
       </div>
       <div className="border-t border-navy-700">
         <p className="container py-4 text-xs text-navy-300">
-          © {new Date().getFullYear()} {siteConfig.name}. Prices in INR.
+          © {new Date().getFullYear()} {siteConfig.name}. Prices in INR. Built by {siteConfig.company}
         </p>
       </div>
     </footer>

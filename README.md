@@ -91,7 +91,7 @@ Audit routes set `maxDuration = 60`. Audits usually take 1 to 5 seconds.
 
 A brand can also list **other names** (for example "BJP" for "Bharatiya Janata Party"), and AI answers that use any of them count as mentions. Short all-caps names match case exactly, so "INC" isn't found in "Acme Inc.".
 
-Every weak category shows one plain-language recommended fix.
+Every weak category shows one plain-language recommended fix. When the homepage can't be loaded at all, the audit shows "No score" and skips the live AI check, so no paid calls are made for a result that can't be scored.
 
 **Free check without sign-up.** The landing page runs the three site checks (60 points) for any URL in a few seconds, with no AI calls. It's rate-limited to 5 checks per visitor and 200 overall per 10 minutes (in memory, per server instance), and results are kept for 15 minutes per site. The full 100-point audit, including live AI visibility, needs an account.
 

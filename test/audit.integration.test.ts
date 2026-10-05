@@ -72,6 +72,8 @@ withSite("server-errors", (siteUrl) => {
     // The homepage never loaded, so the app shows "No score" instead of 0/100.
     assert.equal(isSiteUnreachable(breakdown), true);
     assert.equal(breakdown.structured_data.detail.homepage_unreachable, true);
+    // No AI calls for a site we couldn't load.
+    assert.equal(breakdown.live_visibility.status, "not_run");
   });
 });
 

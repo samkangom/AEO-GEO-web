@@ -112,16 +112,17 @@ export async function createBrand(_prev: FormState, formData: FormData): Promise
   const parsed = brandSchema.safeParse({
     name: formData.get("name"),
     url: formData.get("url"),
+    industry: formData.get("industry") ?? undefined,
     kind: formData.get("kind") || undefined,
     aliases: formData.get("aliases") ?? undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { supabase, user } = await requireUser();
-  const { name, url, kind, aliases } = parsed.data;
+  const { name, url, industry, kind, aliases } = parsed.data;
   const { data: brand, error } = await supabase
     .from("brands")
-    .insert({ user_id: user.id, name, url, kind, aliases })
+    .insert({ user_id: user.id, name, url, industry, kind, aliases })
     .select("id")
     .single();
   if (error || !brand) {

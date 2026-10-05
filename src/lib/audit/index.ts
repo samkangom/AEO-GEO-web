@@ -11,7 +11,7 @@ import type { PromptLike } from "@/lib/prompts/types";
 import { checkLiveVisibility, type LiveVisibilityDeps } from "./live-visibility";
 import { FetchBlockedError, safeFetch } from "./safe-fetch";
 import { scoreStructuredData } from "./structured-data";
-import { CATEGORY_MAX, type AuditBreakdown, type CategoryResult } from "./types";
+import { CATEGORY_MAX, isSiteUnreachable, type AuditBreakdown, type CategoryResult } from "./types";
 import type { OrgKind } from "@/lib/org-kind";
 
 export class AuditError extends Error {}
@@ -146,11 +146,19 @@ export async function runAudit(brand: AuditBrand, opts: AuditOptions = {}): Prom
     (async (info: SiteInfo) =>
       (await generatePromptSet({ ...brand, kind, siteTitle: info.title, siteDescription: info.description }))
         .prompts);
-  const liveVisibility = await checkLiveVisibility(
-    { ...brand, kind },
-    () => preparePrompts(site),
-    opts.engines,
-  );
+  // A site we couldn't load gets no score, so the paid AI calls would be wasted: skip them and say why.
+  const liveVisibility: CategoryResult = isSiteUnreachable(siteChecks)
+    ? {
+        score: 0,
+        max: CATEGORY_MAX.live_visibility,
+        status: "not_run",
+        summary:
+          "The audit stopped before the live check because the site couldn't be loaded, so this part wasn't measured.",
+        checks: [],
+        fix: null,
+        detail: { skipped: "homepage_unreachable" },
+      }
+    : await checkLiveVisibility({ ...brand, kind }, () => preparePrompts(site), opts.engines);
 
   const breakdown: AuditBreakdown = { ...siteChecks, live_visibility: liveVisibility };
   const overallScore = Object.values(breakdown).reduce((sum, c) => sum + c.score, 0);

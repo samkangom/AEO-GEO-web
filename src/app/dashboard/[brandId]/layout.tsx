@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { getBrandOr404 } from "@/lib/brands";
+import { ORG_KIND_SHORT } from "@/lib/org-kind";
 import { displayHost } from "@/lib/url";
 
 export default async function BrandLayout({
@@ -25,7 +26,10 @@ export default async function BrandLayout({
           >
             {displayHost(brand.url)} <ExternalLink className="h-3 w-3" />
           </a>
-          {brand.industry && <span> · {brand.industry}</span>}
+          <span>
+            {" · "}
+            {brand.kind === "business" && brand.industry ? brand.industry : ORG_KIND_SHORT[brand.kind]}
+          </span>
         </p>
       </div>
       {children}

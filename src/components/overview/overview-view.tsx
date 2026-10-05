@@ -220,7 +220,8 @@ export function OverviewView({
               </>
             ) : (
               <>
-                <p className="text-sm text-navy-400">No monitor results yet.</p>
+                <p className="font-display text-5xl font-bold leading-none text-navy-300">—</p>
+                <p className="text-sm text-navy-400">Not monitored yet.</p>
                 <div className="mt-auto">
                   <CardLink href={`${base}/monitor`}>Set up monitoring</CardLink>
                 </div>

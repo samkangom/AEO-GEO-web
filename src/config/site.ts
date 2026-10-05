@@ -8,6 +8,8 @@ export const siteConfig = {
   description:
     "AI visibility (AEO/GEO) for Indian brands and organisations. Audit your site, monitor ChatGPT and Claude answers, and track where you're mentioned, cited or missing.",
   contactEmail: "hello@clearcite.in",
+  /** The company behind the product, credited in the footer. */
+  company: "Lamzing Technologies Pvt. Ltd.",
   // Also consumed by tailwind.config.ts, so colours only live here.
   colors: {
     navy: {

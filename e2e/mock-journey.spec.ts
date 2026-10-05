@@ -49,6 +49,15 @@ test("prompts were generated as drafts and can be activated", async ({ page }) =
   await expect(page.getByText("0 of 8 active")).toBeVisible();
   await page.getByRole("button", { name: "Activate all" }).click();
   await expect(page.getByText("8 of 8 active")).toBeVisible();
+
+  // Your own prompt: saved active, language detected, brand name refused.
+  await page.getByLabel("Add your own prompt").fill("Kiranabooks vs other billing apps for kirana shops");
+  await page.getByRole("button", { name: "Add prompt" }).click();
+  await expect(page.getByText(/Leave “Kiranabooks”/)).toBeVisible();
+  await page.getByLabel("Add your own prompt").fill("kirana dukaan ke liye sasta billing app kaunsa hai");
+  await page.getByRole("button", { name: "Add prompt" }).click();
+  await expect(page.getByText("Prompt added and active.")).toBeVisible();
+  await expect(page.getByText("9 of 9 active")).toBeVisible();
 });
 
 test("monitor run stores labelled mock results and shows them everywhere", async ({ page }) => {
