@@ -9,7 +9,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-navy text-white hover:bg-navy-700",
-        accent: "bg-accent text-white hover:bg-accent-dark",
+        // accent-dark keeps white text above 4.5:1; the brighter accent is for bars and dots.
+        accent: "bg-accent-dark text-white hover:bg-navy-800",
         outline: "border border-navy-100 bg-white text-navy hover:bg-navy-50",
         ghost: "text-navy hover:bg-navy-50",
         destructive: "bg-red-600 text-white hover:bg-red-700",

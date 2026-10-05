@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isPrivateAddress, safeFetch } from "./audit/safe-fetch";
+import dns from "node:dns/promises";
+import http from "node:http";
+import type { AddressInfo } from "node:net";
+import { fetch as undiciFetch } from "undici";
+import { isPrivateAddress, publicOnlyAgent, safeFetch } from "./audit/safe-fetch";
 import { safeNext } from "./safe-next";
 
 test("isPrivateAddress blocks internal ranges", () => {
@@ -14,6 +18,10 @@ test("isPrivateAddress blocks internal ranges", () => {
     "::1",
     "fd00::1",
     "::ffff:10.0.0.1",
+    "192.0.2.10",
+    "198.18.0.1",
+    "64:ff9b::a00:1",
+    "2002:a00:1::1",
   ]) {
     assert.equal(isPrivateAddress(ip), true, ip);
   }
@@ -40,4 +48,21 @@ test("safeNext only allows same-site paths", () => {
   assert.equal(safeNext("/\\evil.com"), "/dashboard");
   assert.equal(safeNext("https://evil.com"), "/dashboard");
   assert.equal(safeNext(null), "/dashboard");
+});
+
+test("the pinned agent refuses a public-looking name that resolves to a private address (DNS rebinding)", async (t) => {
+  // 127.0.0.1.nip.io is a public DNS name that answers 127.0.0.1.
+  const resolved = await dns.lookup("127.0.0.1.nip.io").catch(() => null);
+  if (resolved?.address !== "127.0.0.1") return t.skip("no public DNS here");
+  const server = http.createServer((_req, res) => res.end("internal secret"));
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const { port } = server.address() as AddressInfo;
+  try {
+    await assert.rejects(
+      undiciFetch(`http://127.0.0.1.nip.io:${port}/`, { dispatcher: publicOnlyAgent }),
+      (e: Error) => /Private network/.test(String((e as { cause?: unknown }).cause ?? e.message)),
+    );
+  } finally {
+    server.close();
+  }
 });

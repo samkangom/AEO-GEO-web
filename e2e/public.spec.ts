@@ -84,3 +84,23 @@ test("pricing page carries plan offers and FAQ as structured data", async ({ pag
     .evaluateAll((els) => els.map((e) => e.textContent ?? "").join(" "));
   for (const t of ["SoftwareApplication", "Offer", "FAQPage", "1999", "INR"]) expect(ld).toContain(t);
 });
+
+test("public pages have no serious accessibility violations", async ({ page }) => {
+  const { default: AxeBuilder } = await import("@axe-core/playwright");
+  for (const path of ["/", "/pricing", "/signup", "/login"]) {
+    await page.goto(path);
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    const serious = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(
+      serious.map(
+        (v) =>
+          `${path}: ${v.id} — ${v.nodes
+            .map((n) => n.target.join(" "))
+            .slice(0, 3)
+            .join(", ")}`,
+      ),
+    ).toEqual([]);
+  }
+});

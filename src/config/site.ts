@@ -17,7 +17,8 @@ export const siteConfig = {
       50: "#EEF2F8",
       100: "#D5DEEC",
       200: "#A9BBD6",
-      300: "#7A93BA",
+      // Muted text: 5.4:1 on white, 5.0:1 on paper (WCAG AA for small text).
+      300: "#5B6B85",
       400: "#4D6A98",
       500: "#2F4C7A",
       600: "#1F3860",
@@ -29,7 +30,8 @@ export const siteConfig = {
     accent: {
       DEFAULT: "#0E9F8E",
       light: "#D9F2EE",
-      dark: "#0A7A6D",
+      // Buttons (white text 6.5:1), links and text on accent-light (5.5:1).
+      dark: "#0A6A5E",
     },
     /**
      * Chart series, one fixed colour per AI engine (colour follows the engine,

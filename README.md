@@ -99,7 +99,7 @@ Two content findings are tuned to avoid false credit:
 - ₹ figures count as public pricing only when they look like a price: a non-zero amount, no "Cr" or "lakh", and pricing words close by.
 - When 40% or more of the homepage's words start invisible (inline `opacity:0`, typical of scroll animations), the content card flags it. This isn't scored. Raw findings are stored in `audits.breakdown[category].detail`.
 
-Site fetching (`src/lib/audit/safe-fetch.ts`) enforces timeouts and a size cap. It follows redirects manually and refuses private or internal addresses at every hop, so the brand URL can't be used to probe internal networks.
+Site fetching (`src/lib/audit/safe-fetch.ts`) enforces timeouts and a size cap. Every connection is made through an agent that checks the resolved IP address at connect time, so DNS rebinding can't reach internal hosts. When an outbound proxy is configured (some CI and sandbox networks), the proxy resolves names instead. It follows redirects manually and refuses private or internal addresses at every hop, so the brand URL can't be used to probe internal networks.
 
 ## Monitoring
 

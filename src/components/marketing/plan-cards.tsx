@@ -21,7 +21,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       )}
     >
       {plan.highlighted && (
-        <span className="absolute -top-3 left-6 rounded-full bg-accent px-3 py-0.5 text-xs font-medium text-white">
+        <span className="absolute -top-3 left-6 rounded-full bg-accent-dark px-3 py-0.5 text-xs font-medium text-white">
           Most popular
         </span>
       )}

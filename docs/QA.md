@@ -149,6 +149,10 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | SEC-3 | Without `AUDIT_ALLOW_PRIVATE_HOSTS`, add a brand with `http://127.0.0.1:4004` or `http://169.254.169.254`. | "Private network addresses can't be audited". |
 | SEC-4 | Log in via `/login?next=//evil.com`. | Lands on `/dashboard`, never on an external site. |
 | SEC-5 | `/api/health` | Only true/false for each key. No key values are shown. |
+| SEC-6 (auto) | In the landing check, enter `http://169.254.169.254/latest/meta-data`, a private IP, or a public name that resolves to one (e.g. `127.0.0.1.nip.io`). | Refused: "Private network addresses can't be audited". Each connection's IP is checked at connect time, so DNS rebinding can't reach internal hosts. |
+| SEC-7 | `curl -I https://<your-domain>/`. | X-Frame-Options DENY, CSP `frame-ancestors 'none'`, X-Content-Type-Options nosniff, Referrer-Policy and Permissions-Policy are present. |
+| SEC-8 | `npm audit --omit=dev`. | 0 vulnerabilities in production dependencies. Dev-only findings (Tailwind/ESLint via `braces`) have no fix yet and don't ship. |
+| A11Y-1 (auto) | Public pages through axe (WCAG 2.1 AA). | No serious or critical violations. Primary buttons use accent-dark (white text 6.5:1); muted text is navy-300 (5.4:1 on white). |
 
 ## Reporting a bug
 

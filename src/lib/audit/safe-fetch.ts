@@ -1,5 +1,7 @@
+import dns from "node:dns";
 import { lookup } from "node:dns/promises";
 import net from "node:net";
+import { Agent, fetch as undiciFetch } from "undici";
 import { siteConfig } from "@/config/site";
 
 export const AUDIT_USER_AGENT = `Mozilla/5.0 (compatible; ${siteConfig.name}Audit/1.0)`;
@@ -35,11 +37,15 @@ export function isPrivateAddress(ip: string): boolean {
       (a === 169 && b === 254) ||
       (a === 172 && b >= 16 && b <= 31) ||
       (a === 192 && b === 168) ||
+      (a === 192 && b === 0) || // 192.0.0.0/24 IETF protocol, 192.0.2.0/24 documentation
+      (a === 198 && (b === 18 || b === 19)) || // benchmarking
       a >= 224
     );
   }
   const v6 = ip.toLowerCase();
   if (v6.startsWith("::ffff:")) return isPrivateAddress(v6.slice(7));
+  // NAT64 (64:ff9b::/96) and 6to4 (2002::/16) can wrap a private IPv4 address.
+  if (v6.startsWith("64:ff9b:") || v6.startsWith("2002:")) return true;
   return (
     v6 === "::" ||
     v6 === "::1" ||
@@ -69,14 +75,50 @@ async function assertPublicUrl(url: URL) {
   }
 }
 
-async function readCapped(res: Response, maxBytes: number): Promise<string> {
+/**
+ * Connects only to public addresses, checked at the moment of connecting. This
+ * closes DNS rebinding: a name that resolved to a public address for
+ * assertPublicUrl can't switch to an internal one for the real connection.
+ */
+export const publicOnlyAgent = new Agent({
+  connect: {
+    lookup(hostname, options, callback) {
+      dns.lookup(hostname, { ...options, all: true }, (err, addresses) => {
+        if (err) return callback(err, "", 0);
+        const list = addresses as dns.LookupAddress[];
+        if (!list.length || list.some((a) => isPrivateAddress(a.address))) {
+          return callback(new FetchBlockedError("Private network addresses can't be audited"), "", 0);
+        }
+        // undici asks for a single address unless `all` was requested.
+        if ((options as dns.LookupOptions).all) return callback(null, list as never, 0);
+        callback(null, list[0].address, list[0].family);
+      });
+    },
+  },
+});
+
+/**
+ * With an outbound proxy configured (some CI and sandbox networks), the proxy
+ * resolves names and connects, so the pinned agent can't be used. Production
+ * on Vercel has no proxy and always uses it.
+ */
+function shouldPinConnections() {
+  return !allowPrivateHosts() && !process.env.HTTPS_PROXY && !process.env.https_proxy;
+}
+
+/** Works with both Node's global fetch and undici's fetch responses. */
+type StreamingBody = {
+  getReader(): { read(): Promise<{ done: boolean; value?: Uint8Array }>; cancel(): Promise<void> };
+};
+
+async function readCapped(res: { body: StreamingBody | null }, maxBytes: number): Promise<string> {
   if (!res.body) return "";
   const reader = res.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
   while (total < maxBytes) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done || !value) break;
     chunks.push(value);
     total += value.byteLength;
   }
@@ -103,15 +145,17 @@ export async function safeFetch(rawUrl: string, opts: Options = {}): Promise<Fet
 
   for (let hop = 0; hop <= maxRedirects; hop++) {
     await assertPublicUrl(url);
-    const res = await fetch(url, {
-      redirect: "manual",
+    const init = {
+      redirect: "manual" as const,
       signal,
       headers: {
         "user-agent": AUDIT_USER_AGENT,
         accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
       },
-      cache: "no-store",
-    });
+    };
+    const res = shouldPinConnections()
+      ? await undiciFetch(url, { ...init, dispatcher: publicOnlyAgent })
+      : await fetch(url, { ...init, cache: "no-store" });
 
     const location = res.headers.get("location");
     if (res.status >= 300 && res.status < 400 && location) {

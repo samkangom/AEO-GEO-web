@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { configuredEngines, queryEngine } from "@/lib/engines";
 import { classifySentiment } from "@/lib/engines/claude-tasks";
 import { log } from "@/lib/log";
+import { fetchAllPages } from "@/lib/supabase/paged";
 import { isMockMode } from "@/lib/mock-mode";
 import type { Database, EngineResult, MonitorRun } from "@/lib/supabase/types";
 import { executeMonitor, type MonitorDeps } from "./execute";
@@ -120,14 +121,18 @@ export async function listRunsWithStats(supabase: DB, brandId: string, limit = 3
   if (error) throw error;
   if (!runs.length) return [];
 
-  const { data: rows, error: rowsError } = await supabase
-    .from("engine_results")
-    .select("run_id, engine, mentioned, cited, position, sentiment")
-    .in(
-      "run_id",
-      runs.map((r) => r.id),
-    );
-  if (rowsError) throw rowsError;
+  // Paged: the API returns at most 1,000 rows per request and silently drops the rest.
+  const rows = await fetchAllPages((from, to) =>
+    supabase
+      .from("engine_results")
+      .select("id, run_id, engine, mentioned, cited, position, sentiment")
+      .in(
+        "run_id",
+        runs.map((r) => r.id),
+      )
+      .order("id")
+      .range(from, to),
+  );
 
   return runs.map((run) => ({
     ...run,
