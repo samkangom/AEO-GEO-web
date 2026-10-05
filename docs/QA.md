@@ -27,6 +27,9 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | MKT-6 (auto) | `/robots.txt` and `/sitemap.xml`. | Marketing pages are allowed. `/dashboard`, `/onboarding`, `/api` and `/auth` are disallowed. The sitemap lists `/`, `/pricing`, `/signup` and `/login`, using NEXT_PUBLIC_SITE_URL when set. |
 | MKT-7 | Dogfood: `AUDIT_ALLOW_PRIVATE_HOSTS=1 npm run audit -- http://127.0.0.1:3000 --site-only`. | Crawler access 25/25, structured data 20/20, content signals 11/15 (there's no About page). |
 | MKT-8 | Logged in, open `/`, then click "Log in". | Redirected to the dashboard. |
+| MKT-9 (auto) | On `/`, under "Check any website now", enter a site and click "Check now". | Scores out of 60 in a few seconds, with one fix per weak area and a "Get the full score" link to sign-up. No AI calls are made. A site that blocks us shows "No score". |
+| MKT-10 | Run the check 6 times in 10 minutes from one network, with 6 different sites. | The 6th says to try again in a few minutes. Re-checking the same site within 15 minutes returns the saved result instantly. |
+| MKT-11 (auto) | View source of `/pricing`. | JSON-LD with SoftwareApplication offers (INR, monthly, excluding GST) and FAQPage. |
 
 ## Auth
 
@@ -68,6 +71,9 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | AUD-9 | Add `inc.in` as **Political party** with other names `INC, Congress party`. | "Public pricing" and "Product or Service schema" show ⓘ "Not applicable for a political party, so no points are lost". Summary says "(x of 3)". Fixes don't mention prices or buyers. On 4 Oct 2026, site checks scored 37 of the 60 measurable points. |
 | AUD-10 | Add `www.bjp.org` as **Political party**. | From a cloud server the site answered HTTP 503 to every request on 4 Oct 2026. The audit header says "We couldn't load this website, so there's no score". Overview and All brands show "No score", not 0. From an office network the site may load and be scored normally. |
 | AUD-13 | Audit history with one unreachable audit between two scored ones. | That row says "No score". The change column compares the scored audits either side of it. |
+| AUD-14 (auto) | A homepage that shows ₹ figures that aren't prices (for example "Ad-GMV ₹ 0.0 Cr", "₹40 crore ad spend"). | Doesn't count as public pricing. "Plans from ₹499/month" or "pumps from Rs. 8,500" still count. |
+| AUD-15 (auto) | A homepage whose text starts at `opacity:0` (scroll animations). With 40% or more of the words hidden, Content signals shows ✘ "Your homepage text is visible without waiting for animations … Not scored". | The score is unchanged. trailytics.ai showed about 75% hidden on 5 Oct 2026. |
+| AUD-16 | Audit a brand twice or more. | The header says "Since your first audit on <date>: A → B (+N)". It isn't shown when either audit couldn't load the site. |
 | AUD-11 | Change a brand's type to Political party in Settings, then regenerate prompts (needs Claude). | Questions are neutral and informational (positions, manifestos, funding, local offices). None asks who to vote for, and none contains the party's name or other names. The pricing group is labelled "Funding & membership". |
 | AUD-12 (auto) | Other names. | An answer with "BJP" counts for a brand with other name `BJP`. "Acme Inc." doesn't count for other name `INC`. |
 
@@ -115,9 +121,10 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | MON-4 | Back on the Monitor tab. | Stat tiles show the latest run. The chart shows a point per engine. Run history shows the run with per-engine percentages that match the detail page. |
 | MON-5 | Run it twice more. | The chart draws lines, and hover shows each engine's value "of N". |
 | MON-6 | Double-click "Run monitor now", or run it in two tabs. | The second attempt says a run is already in progress. |
-| MON-7 | Break one key (invalid OPENAI_API_KEY) and run. | That engine's rows say "Couldn't check: …". The rates use only answers received, and history shows "(+N failed)". |
+| MON-7 | Break one key (invalid OPENAI_API_KEY) and run. | That engine's rows say "Call failed … not counted". The rates use only answers received, and the history's "Failed calls" column counts them. |
 | MON-8 | Activate more than 20 prompts. | Clear message about the 20-prompt limit. The button is disabled. |
 | MON-9 | Phone width (390 px). | Tiles are 2 per row, the chart fits, and the history table scrolls inside its card. |
+| MON-10 | After a run, read "Sources AI answers cite". | Domains are ranked by how many answers cited them (each answer counted once per domain). Your own site is marked "Your site". Other rows say how many of those answers mentioned you. Failed calls are left out. |
 
 ## Mock mode & demo data
 

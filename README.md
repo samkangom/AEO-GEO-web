@@ -91,7 +91,13 @@ Audit routes set `maxDuration = 60`. Audits usually take 1 to 5 seconds.
 
 A brand can also list **other names** (for example "BJP" for "Bharatiya Janata Party"), and AI answers that use any of them count as mentions. Short all-caps names match case exactly, so "INC" isn't found in "Acme Inc.".
 
-Every weak category shows one plain-language recommended fix. Raw findings are stored in `audits.breakdown[category].detail`.
+Every weak category shows one plain-language recommended fix.
+
+**Free check without sign-up.** The landing page runs the three site checks (60 points) for any URL in a few seconds, with no AI calls. It's rate-limited to 5 checks per visitor and 200 overall per 10 minutes (in memory, per server instance), and results are kept for 15 minutes per site. The full 100-point audit, including live AI visibility, needs an account.
+
+Two content findings are tuned to avoid false credit:
+- ₹ figures count as public pricing only when they look like a price: a non-zero amount, no "Cr" or "lakh", and pricing words close by.
+- When 40% or more of the homepage's words start invisible (inline `opacity:0`, typical of scroll animations), the content card flags it. This isn't scored. Raw findings are stored in `audits.breakdown[category].detail`.
 
 Site fetching (`src/lib/audit/safe-fetch.ts`) enforces timeouts and a size cap. It follows redirects manually and refuses private or internal addresses at every hop, so the brand URL can't be used to probe internal networks.
 
@@ -101,6 +107,8 @@ Site fetching (`src/lib/audit/safe-fetch.ts`) enforces timeouts and a size cap. 
 - whether the brand is mentioned, its list position, whether the answer cites the brand's site, and the sentiment;
 - the full answer text, citations and model;
 - or, if the call failed, the error.
+
+The Monitor tab also lists the **sources AI answers cite** in the latest run: domains ranked by how many answers cited them, with your own site marked. These are the sites to get listed or reviewed on.
 
 Mention rate is mentioned ÷ answers received. Failed calls are shown separately and never counted as "not mentioned". A run left `running` for more than 15 minutes (for example, a function timeout) shows as *Interrupted*.
 

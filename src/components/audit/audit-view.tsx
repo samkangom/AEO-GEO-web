@@ -32,13 +32,28 @@ const WIN_NAMES: Record<CategoryKey, string> = {
 export type AuditRow = { id: string; overall_score: number; breakdown: unknown; created_at: string };
 
 /** The audit page once a brand has at least one audit. `audits` is newest first. */
-export function AuditView({ brandId, audits }: { brandId: string; audits: [AuditRow, ...AuditRow[]] }) {
+export function AuditView({
+  brandId,
+  audits,
+  first,
+}: {
+  brandId: string;
+  /** Newest first. */
+  audits: [AuditRow, ...AuditRow[]];
+  /** The brand's first ever audit, for "since your first audit". */
+  first?: AuditRow | null;
+}) {
   const latest = audits[0];
   const breakdown = latest.breakdown as unknown as AuditBreakdown;
   const unmeasured = unmeasuredPoints(breakdown);
   const measuredMax = 100 - unmeasured;
   const { wins, points: winPoints } = biggestWins(breakdown);
   const unreachable = isSiteUnreachable(breakdown);
+  // Progress from a dated baseline. Only between two scored audits.
+  const baseline =
+    first && first.id !== latest.id && !unreachable && !isSiteUnreachable(first.breakdown as AuditBreakdown)
+      ? first
+      : null;
   const reason = String(breakdown.structured_data?.detail?.reason ?? "");
   const whatHappened = reason.startsWith("HTTP")
     ? `The homepage answered our checker with an error (${reason}).`
@@ -100,6 +115,14 @@ export function AuditView({ brandId, audits }: { brandId: string; audits: [Audit
                 <p className="text-sm text-navy-200">
                   {unmeasured} of 100 points weren&apos;t measured in this audit (see below), so your score is
                   out of the {measuredMax} points we could check.
+                </p>
+              )}
+              {baseline && (
+                <p className="text-sm font-semibold text-[#9FE3D8]">
+                  Since your first audit on {formatDate(baseline.created_at).split(",")[0]}:{" "}
+                  {baseline.overall_score} → {latest.overall_score} (
+                  {latest.overall_score - baseline.overall_score >= 0 ? "+" : "−"}
+                  {Math.abs(latest.overall_score - baseline.overall_score)})
                 </p>
               )}
               <p className="text-xs text-navy-200">Last audited {formatDate(latest.created_at)}</p>

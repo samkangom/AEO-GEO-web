@@ -13,16 +13,21 @@ import {
 } from "lucide-react";
 import { Faq } from "@/components/marketing/faq";
 import { PlanCards } from "@/components/marketing/plan-cards";
+import { QuickCheck } from "@/components/marketing/quick-check";
 import { Button } from "@/components/ui/button";
 import { plans } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
 import { CATEGORY_MAX } from "@/lib/audit/types";
 import { siteUrl } from "@/lib/site-url";
 
+// The no-sign-up site check (a server action) runs on this route.
+export const maxDuration = 60;
+
 export const metadata: Metadata = {
   title: { absolute: `${siteConfig.name} — Is AI recommending your brand?` },
   description: siteConfig.description,
   alternates: { canonical: "/" },
+  openGraph: { url: "/" },
 };
 
 /** The real scoring model — shown instead of invented example results. */
@@ -164,7 +169,12 @@ export default function HomePage() {
               <Link href="/pricing">See pricing</Link>
             </Button>
           </div>
-          <p className="text-sm text-navy-400">Free audit · No card needed · Results in about a minute</p>
+          <p className="text-sm text-navy-400">
+            Free audit · No card needed · Results in about a minute ·{" "}
+            <a href="#check" className="font-medium text-accent-dark underline-offset-2 hover:underline">
+              or check a website now, no sign-up
+            </a>
+          </p>
         </div>
 
         <div className="rounded-2xl bg-navy p-6 text-white shadow-xl sm:p-8">
@@ -192,6 +202,26 @@ export default function HomePage() {
             Every live-visibility point comes from a real question asked to a real AI engine — you can read
             each answer.
           </p>
+        </div>
+      </section>
+
+      {/* Instant check, no sign-up */}
+      <section
+        id="check"
+        aria-labelledby="check-title"
+        className="scroll-mt-20 border-t border-navy-100 py-16 md:py-20"
+      >
+        <div className="container grid gap-10 lg:grid-cols-[1fr_1.3fr]">
+          <div className="space-y-3">
+            <h2 id="check-title" className="text-3xl font-semibold text-navy">
+              Check any website now
+            </h2>
+            <p className="text-lg text-navy-500">
+              See in seconds whether AI crawlers can read a site, and whether it tells AI clearly who it is.
+              No sign-up and no sales call.
+            </p>
+          </div>
+          <QuickCheck />
         </div>
       </section>
 

@@ -77,7 +77,7 @@ export type AuditOptions = {
   engines?: LiveVisibilityDeps;
 };
 
-type SiteChecks = Pick<AuditBreakdown, "crawl_access" | "structured_data" | "content_signals"> & {
+export type SiteChecks = Pick<AuditBreakdown, "crawl_access" | "structured_data" | "content_signals"> & {
   site: SiteInfo;
 };
 
@@ -86,7 +86,7 @@ type SiteChecks = Pick<AuditBreakdown, "crawl_access" | "structured_data" | "con
  * Throws AuditError only when the site can't be reached at all (bad domain etc.);
  * HTTP-level failures are recorded in the breakdown instead.
  */
-async function runSiteChecks(siteUrl: string, kind: OrgKind): Promise<SiteChecks> {
+export async function runSiteChecks(siteUrl: string, kind: OrgKind = "business"): Promise<SiteChecks> {
   const origin = new URL(siteUrl).origin;
 
   const homepagePromise = safeFetch(siteUrl, { timeoutMs: 12_000 }).catch((e: unknown) => {

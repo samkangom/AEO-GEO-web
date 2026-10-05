@@ -65,3 +65,22 @@ test("health endpoint reports configuration without secrets", async ({ request }
   expect(body).toHaveProperty("providers.openai");
   expect(JSON.stringify(body)).not.toMatch(/sk-|placeholder/);
 });
+
+test("landing page: no-sign-up site check scores a site out of 60", async ({ page }) => {
+  await page.goto("/#check");
+  await page.getByLabel("Website to check").fill("http://127.0.0.1:4002");
+  await page.getByRole("button", { name: "Check now" }).click();
+  const result = page.getByRole("heading", { name: "127.0.0.1:4002" });
+  await expect(result).toBeVisible({ timeout: 45_000 });
+  // The "minimal" fixture: 25 crawler + 10 structured + 7 content.
+  await expect(page.getByText("42 of 60 site points")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Get the full score/ })).toHaveAttribute("href", "/signup");
+});
+
+test("pricing page carries plan offers and FAQ as structured data", async ({ page }) => {
+  await page.goto("/pricing");
+  const ld = await page
+    .locator('script[type="application/ld+json"]')
+    .evaluateAll((els) => els.map((e) => e.textContent ?? "").join(" "));
+  for (const t of ["SoftwareApplication", "Offer", "FAQPage", "1999", "INR"]) expect(ld).toContain(t);
+});

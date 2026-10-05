@@ -21,12 +21,22 @@ export default async function AuditPage({
   const brand = await getBrandOr404(brandId);
 
   const supabase = await createClient();
-  const { data: audits } = await supabase
-    .from("audits")
-    .select("id, overall_score, breakdown, created_at")
-    .eq("brand_id", brand.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
+  const [{ data: audits }, { data: first }] = await Promise.all([
+    supabase
+      .from("audits")
+      .select("id, overall_score, breakdown, created_at")
+      .eq("brand_id", brand.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    // The baseline for "since your first audit", which may be older than the ten shown.
+    supabase
+      .from("audits")
+      .select("id, overall_score, breakdown, created_at")
+      .eq("brand_id", brand.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (!audits?.length) {
     return (
@@ -46,5 +56,7 @@ export default async function AuditPage({
     );
   }
 
-  return <AuditView brandId={brand.id} audits={audits as [(typeof audits)[0], ...typeof audits]} />;
+  return (
+    <AuditView brandId={brand.id} audits={audits as [(typeof audits)[0], ...typeof audits]} first={first} />
+  );
 }

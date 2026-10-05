@@ -8,6 +8,7 @@ import type { RunWithStats } from "@/lib/monitor/store";
 import { formatRate } from "@/lib/monitor/stats";
 import { formatDate } from "@/lib/utils";
 import { latestDelta, mentionTrend } from "@/lib/monitor/chart";
+import type { CitedSource } from "@/lib/monitor/sources";
 import { MentionChart } from "./mention-chart";
 import { RunMonitorButton } from "./run-monitor-button";
 import { RunStatusBadge } from "./run-status-badge";
@@ -28,6 +29,8 @@ export type MonitorViewProps = {
   engines: EngineId[];
   /** Newest first. */
   runs: RunWithStats[];
+  /** Websites cited by the latest run's answers, most-cited first. */
+  sources?: CitedSource[];
 };
 
 export function MonitorView({
@@ -37,6 +40,7 @@ export function MonitorView({
   maxPrompts,
   engines,
   runs,
+  sources = [],
 }: MonitorViewProps) {
   const latest = runs.find((r) => r.stats.overall.measured > 0);
   const { engines: chartEngines, points } = mentionTrend(runs, engines);
@@ -144,6 +148,47 @@ export function MonitorView({
             </CardContent>
           </Card>
         </>
+      )}
+
+      {latest && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Sources AI answers cite</CardTitle>
+            <CardDescription>
+              The websites the answers in the latest run relied on. Being listed, reviewed or mentioned on
+              these is how brands get into the answers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {sources.length === 0 ? (
+              <p className="text-sm text-navy-400">The answers in this run didn&apos;t cite any websites.</p>
+            ) : (
+              <ul>
+                {sources.map((s) => (
+                  <li
+                    key={s.domain}
+                    className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 border-b border-navy-50 py-2 last:border-0"
+                  >
+                    <span className="min-w-0 flex-1 truncate font-medium text-navy [overflow-wrap:anywhere]">
+                      {s.domain}
+                    </span>
+                    {s.own && <Badge variant="good">Your site</Badge>}
+                    <span className="text-sm tabular-nums text-navy-600">
+                      cited in {s.answers} answer{s.answers === 1 ? "" : "s"}
+                    </span>
+                    {!s.own && (
+                      <span className="w-full text-xs text-navy-400 sm:w-auto">
+                        {s.withBrand === 0
+                          ? "you weren't mentioned in any of them"
+                          : `you were mentioned in ${s.withBrand}`}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {runs.length > 0 && (

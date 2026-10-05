@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { analyzeHomepage, confirmsPage, scoreContentSignals } from "./content-signals";
+import { analyzeHomepage, confirmsPage, scoreContentSignals, showsPrices } from "./content-signals";
 import { scoreCrawlAccess } from "./crawl-access";
 import { extractJsonLdTypes, scoreStructuredData } from "./structured-data";
 import { normaliseSiteUrl } from "../url";
@@ -103,6 +103,44 @@ test("non-business sites: pricing and product schema don't apply and cost no poi
   assert.equal(scoreStructuredData({ url: SITE, html: orgOnly }, null).score, 10);
   // A nonprofit can still describe its services, so that check stays.
   assert.equal(scoreStructuredData({ url: SITE, html: orgOnly }, null, "nonprofit").score, 10);
+});
+
+test("prices: real prices count, business metrics and zeros don't", () => {
+  assert.equal(showsPrices("Plans from ₹1,999/month"), true);
+  assert.equal(showsPrices("Monoblock pumps from Rs. 8,500"), true);
+  assert.equal(showsPrices("Starter ₹499 per month + GST"), true);
+  // Dashboard mock-ups and revenue figures (seen on a real site, 5 Oct 2026).
+  assert.equal(showsPrices("Avg CPC ₹ 0 Engagement 0.00 L"), false);
+  assert.equal(showsPrices("Ad-GMV ₹ 0.0 Cr ROAS 0.00 ×"), false);
+  assert.equal(showsPrices("We manage ₹40 crore of ad spend"), false);
+  assert.equal(showsPrices("Raised ₹25 lakh in seed funding"), false);
+  // A bare amount with no pricing words around it.
+  assert.equal(showsPrices("Founded in 2019. ₹500 donated to charity"), false);
+});
+
+test("content signals: homepage text hidden until animations run is reported, not scored", () => {
+  const words = (n: number) => Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
+  const html = `<html><head><meta name="description" content="Commerce intelligence for FMCG and D2C brands across India, with case studies."></head>
+    <body><h1>Real results</h1><div style="opacity:0;transform:translateY(24px)"><p>${words(80)}</p>
+    <div style="opacity:0">${words(10)}</div></div><p>${words(20)}</p></body></html>`;
+  const a = analyzeHomepage(html, `${SITE}/`);
+  assert.equal(a.text.hidden, 90);
+  const r = scoreContentSignals(a, {
+    about: { url: `${SITE}/about`, html: "" },
+    faq: { url: `${SITE}/faq`, html: "" },
+    pricing: { url: `${SITE}/pricing`, html: "" },
+  });
+  assert.equal(r.score, 15);
+  const hidden = r.checks.find((c) => /visible without waiting/.test(c.label));
+  assert.equal(hidden?.passed, false);
+  assert.match(hidden?.note ?? "", /Not scored/);
+  assert.match(r.fix ?? "", /opacity 0/);
+
+  const visible = analyzeHomepage(
+    `<body><p>${words(100)}</p><div style="opacity:0.9">x</div></body>`,
+    `${SITE}/`,
+  );
+  assert.equal(visible.text.hidden, 0);
 });
 
 test("content signals: unlinked SPA shell doesn't count as a page", () => {

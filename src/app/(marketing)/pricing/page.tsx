@@ -4,12 +4,62 @@ import { PlanCards } from "@/components/marketing/plan-cards";
 import { CopyEmailButton } from "@/components/marketing/copy-email-button";
 import { formatInr, plans } from "@/config/pricing";
 import { siteConfig } from "@/config/site";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description: `${siteConfig.name} plans in INR: a free AI-readiness audit, then monitoring from ₹1,999/month for Indian brands, organisations and agencies.`,
   alternates: { canonical: "/pricing" },
+  openGraph: { url: "/pricing", title: `Pricing · ${siteConfig.name}` },
 };
+
+/** Plans and FAQ as JSON-LD, so AI answers about our pricing quote the real figures. */
+function PricingStructuredData() {
+  const base = siteUrl();
+  const data = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        name: siteConfig.name,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        url: `${base}/pricing`,
+        offers: plans.map((p) => ({
+          "@type": "Offer",
+          name: p.name,
+          description: p.tagline,
+          price: p.priceInr,
+          priceCurrency: "INR",
+          ...(p.priceInr > 0 && {
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: p.priceInr,
+              priceCurrency: "INR",
+              unitCode: "MON",
+              valueAddedTaxIncluded: false,
+            },
+          }),
+        })),
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: FAQ.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      // JSON.stringify output with "<" escaped cannot close the script tag.
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
+    />
+  );
+}
 
 const starter = plans.find((p) => p.id === "starter")!;
 const starterGst = Math.round(starter.priceInr * 0.18);
@@ -40,6 +90,7 @@ const FAQ = [
 export default function PricingPage() {
   return (
     <div className="container space-y-16 py-16">
+      <PricingStructuredData />
       <div className="mx-auto max-w-2xl space-y-3 text-center">
         <p className="text-sm font-medium uppercase tracking-wide text-accent-dark">Pricing</p>
         <h1 className="text-4xl font-semibold tracking-tight text-navy">Simple plans, in rupees</h1>

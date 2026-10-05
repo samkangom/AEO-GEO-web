@@ -39,7 +39,7 @@ export type AuditBreakdown = Record<CategoryKey, CategoryResult>;
  * the block may only affect automated checkers like ours, so a 0 would be
  * misleading. Older audits are recognised by both homepage checks erroring.
  */
-export function isSiteUnreachable(breakdown: AuditBreakdown) {
+export function isSiteUnreachable(breakdown: Pick<AuditBreakdown, "structured_data" | "content_signals">) {
   const { structured_data: sd, content_signals: cs } = breakdown;
   if (!sd || !cs) return false;
   if (sd.detail?.homepage_unreachable === true) return true;
