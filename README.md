@@ -21,7 +21,7 @@ Without AI keys, the audit's **Live AI visibility** category (40 pts) is reporte
 
 ## Get a shareable test link
 
-Follow **[docs/DEPLOY.md](docs/DEPLOY.md)**: Supabase + Vercel, about 15 minutes, no installs.
+Follow **[docs/DEPLOY.md](docs/DEPLOY.md)**: Supabase + Vercel, from a test link to real AI answers and launch, no installs.
 
 ## Try it without AI keys (demo)
 
