@@ -35,3 +35,19 @@ export async function runMonitorNow(_prev: FormState, formData: FormData): Promi
   revalidatePath(`/dashboard/${brandId}`, "layout");
   redirect(`/dashboard/${brandId}/monitor/${result.runId}`);
 }
+
+/** Turns scheduled weekly monitoring on or off for one brand. */
+export async function setAutoMonitor(formData: FormData): Promise<void> {
+  const brandId = String(formData.get("brandId"));
+  const on = formData.get("on") === "1";
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // RLS: only the owner's brand is updated.
+  const { error } = await supabase.from("brands").update({ auto_monitor: on }).eq("id", brandId);
+  if (error) log.error("monitor.schedule_update_failed", error, { brandId });
+  revalidatePath(`/dashboard/${brandId}/monitor`);
+}

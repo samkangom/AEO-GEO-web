@@ -103,7 +103,7 @@ Site fetching (`src/lib/audit/safe-fetch.ts`) enforces timeouts and a size cap. 
 
 ## Monitoring
 
-"Run monitor now" on the Monitor tab asks every active prompt (up to 20) to every configured engine, 8 calls at a time. Each answer is saved to `engine_results` as soon as it arrives, with:
+"Run monitor now" on the Monitor tab asks every active prompt (up to 20) to every configured engine, 20 calls at a time. Each answer is saved to `engine_results` as soon as it arrives, with:
 - whether the brand is mentioned, its list position, whether the answer cites the brand's site, and the sentiment;
 - the full answer text, citations and model;
 - or, if the call failed, the error.
@@ -112,7 +112,11 @@ The Monitor tab also lists the **sources AI answers cite** in the latest run: do
 
 Mention rate is mentioned ÷ answers received. Failed calls are shown separately and never counted as "not mentioned". A run left `running` for more than 15 minutes (for example, a function timeout) shows as *Interrupted*.
 
-**Scheduled monitoring (not built):** add `app/api/cron/monitor/route.ts` (Vercel Cron, or Supabase `pg_cron` calling it). It should check the cron secret, create a service-role Supabase client, and call `runMonitorForBrand()` (`src/lib/monitor/store.ts`) for each brand that's due. See the comment on that function.
+**Scheduled weekly monitoring.** `vercel.json` sets a daily Vercel Cron (03:30 UTC, 9:00 IST) on `/api/cron/monitor`.
+- That route finds the brands that are due. A brand is due when its schedule is on (`brands.auto_monitor`, default on, switched on the Monitor tab), it has 1–20 active prompts, and it has had no run in the past 7 days. A manual run counts; a failed run doesn't, so it's retried the next day.
+- It then starts each brand (up to 10 a day) as its own request to `/api/cron/monitor/brand`. That request runs the same `runMonitorForBrand()` as "Run monitor now", in the background, with `trigger = 'scheduled'`. Scheduled runs are labelled "Scheduled" in the run history.
+- Both routes refuse any request without `Authorization: Bearer $CRON_SECRET`, which Vercel Cron sends automatically. They need `SUPABASE_SERVICE_ROLE_KEY` (server-only) because no user is signed in. The rules are in `src/lib/monitor/schedule.ts`, with unit tests.
+- To run it by hand: `curl -H "Authorization: Bearer $CRON_SECRET" https://<your-domain>/api/cron/monitor`.
 
 ## Data model & security
 
@@ -150,6 +154,7 @@ All AI calls go through `src/lib/engines/`. Nothing else imports a provider SDK.
 | Live visibility: Claude | Anthropic Messages API, `claude-opus-5-5` (override: `ANTHROPIC_MODEL`) | `web_search_20260209` tool, user location India, effort `low`. Server-side refusal fallback (`fallbacks: "default"`) is on, and the model that actually answered is recorded. |
 | Prompt generation | Claude, same model | Structured JSON output. Prompts that contain the brand name are dropped. |
 | Sentiment tag (monitor) | Claude Haiku 4.5 (`claude-haiku-4-5`) | Small, fast classification call, made only for answers that mention the brand |
-| Gemini, Perplexity | Stubs | Always "not configured" until built |
+| Live visibility: Gemini | Gemini API `generateContent`, `gemini-flash-latest` (override: `GEMINI_MODEL`) | Google Search grounding. The API has no user-location setting. Grounding links are short-lived Google redirects, so each is recorded as its source domain (`https://<domain>/`). |
+| Live visibility: Perplexity | Perplexity Chat Completions, `sonar` (override: `PERPLEXITY_MODEL`) | Always searches the web; user location India. Citations come from `search_results` and `citations`. |
 
-Rough cost per audit with both keys: one prompt-generation call on a brand's first audit, then 10 web-search answers. Pricing: Claude Opus 5.5 is $4/$20 per million input/output tokens plus web-search fees; OpenAI pricing is per their price list.
+Each engine joins when its key is set; engines without a key show "Not configured". Rough cost per audit with all four keys: one prompt-generation call on a brand's first audit, then 20 web-search answers (5 prompts × 4 engines). Pricing: Claude Opus 5.5 is $4/$20 per million input/output tokens plus web-search fees; OpenAI pricing is per their price list.

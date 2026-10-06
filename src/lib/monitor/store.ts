@@ -32,16 +32,14 @@ export function defaultMonitorDeps(brand: BrandRow, salt?: string): MonitorDeps 
 /**
  * One monitor run: every active prompt × every configured engine.
  *
- * Triggered manually by "Run monitor now". Scheduled monitoring hooks in
- * here: add `app/api/cron/monitor/route.ts` (Vercel Cron, or Supabase
- * pg_cron calling it), authenticate the cron secret, create a service-role
- * client, and call `runMonitorForBrand` for each brand due a run. For large
- * prompt sets, fan out one job per brand via a queue instead of one request.
+ * Started by "Run monitor now" (`trigger: "manual"`, user's RLS client) or by
+ * the weekly schedule (`app/api/cron/monitor/`, service-role client).
  */
 export async function runMonitorForBrand(
   supabase: DB,
   brand: BrandRow,
   deps: MonitorDeps = defaultMonitorDeps(brand),
+  trigger: MonitorRun["trigger"] = "manual",
 ): Promise<{ runId: string } | { error: string }> {
   const { data: prompts, error: promptsError } = await supabase
     .from("prompts")
@@ -56,7 +54,10 @@ export async function runMonitorForBrand(
     };
   }
   if (!deps.configuredEngines().length) {
-    return { error: "No AI engines are configured. Add OPENAI_API_KEY and/or ANTHROPIC_API_KEY." };
+    return {
+      error:
+        "No AI engines are configured. Add at least one of OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY or PERPLEXITY_API_KEY.",
+    };
   }
 
   const { data: running } = await supabase
@@ -69,7 +70,7 @@ export async function runMonitorForBrand(
 
   const { data: run, error: runError } = await supabase
     .from("monitor_runs")
-    .insert({ brand_id: brand.id, status: "running", mock: isMockMode() })
+    .insert({ brand_id: brand.id, status: "running", mock: isMockMode(), trigger })
     .select("id")
     .single();
   if (runError || !run) throw runError ?? new Error("Couldn't create monitor run");
@@ -96,7 +97,13 @@ export async function runMonitorForBrand(
       if (error) log.error("monitor.result_save_failed", error, { runId: run.id, engine: r.engine });
     });
     status = summary.measured > 0 ? "completed" : "failed";
-    log.info("monitor.completed", { brandId: brand.id, runId: run.id, ...summary, ms: Date.now() - started });
+    log.info("monitor.completed", {
+      brandId: brand.id,
+      runId: run.id,
+      trigger,
+      ...summary,
+      ms: Date.now() - started,
+    });
   } catch (e) {
     log.error("monitor.failed", e, { brandId: brand.id, runId: run.id });
   } finally {

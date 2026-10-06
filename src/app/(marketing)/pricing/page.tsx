@@ -79,7 +79,7 @@ const FAQ = [
   },
   {
     q: "Which AI engines do you check?",
-    a: "ChatGPT and Claude, with web search on. Gemini and Perplexity are coming soon. Until then they show “Not configured”, never an estimate.",
+    a: "ChatGPT, Claude, Gemini and Perplexity, each with web search on. If an engine can’t be reached, its results show “Not configured” or “Couldn’t check”, never an estimate.",
   },
   {
     q: "What counts as a “prompt”?",
@@ -99,8 +99,8 @@ export default function PricingPage() {
         <p className="text-sm font-medium uppercase tracking-wide text-accent-dark">Pricing</p>
         <h1 className="text-4xl font-semibold tracking-tight text-navy">Simple plans, in rupees</h1>
         <p className="text-lg text-navy-500">
-          Start with a free AI-readiness audit. Upgrade when you want to track how ChatGPT and Claude talk
-          about your brand, week after week.
+          Start with a free AI-readiness audit. Upgrade when you want to track how ChatGPT, Claude, Gemini and
+          Perplexity talk about your brand, week after week.
         </p>
       </div>
 

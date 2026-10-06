@@ -7,6 +7,8 @@ import {
   type EngineId,
 } from "@/lib/engines";
 import { log } from "@/lib/log";
+import { pool } from "@/lib/pool";
+import { listNames } from "@/lib/utils";
 import { isMockModel } from "@/lib/mock-mode";
 import { pickAuditPrompts } from "@/lib/prompts/select";
 import { PromptsUnavailableError, type PromptLike } from "@/lib/prompts/types";
@@ -31,6 +33,9 @@ function defaultDeps(brand: BrandRef): LiveVisibilityDeps {
 }
 
 const MAX_STORED_ANSWER = 6000;
+
+/** Simultaneous AI calls in one audit: enough to finish fast, few enough for free-tier rate limits. */
+const AUDIT_CONCURRENCY = 12;
 
 function unmeasured(status: "not_configured" | "error", summary: string, fix: string | null, detail = {}) {
   return {
@@ -59,8 +64,8 @@ export async function checkLiveVisibility(
   if (engines.length === 0) {
     return unmeasured(
       "not_configured",
-      "Live AI answer checks are not configured (no OpenAI or Anthropic API key), so this part wasn't measured.",
-      "Add OPENAI_API_KEY and/or ANTHROPIC_API_KEY to your environment to measure whether AI answers mention your brand.",
+      "Live AI answer checks are not configured (no AI engine API key), so this part wasn't measured.",
+      "Add at least one of OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY or PERPLEXITY_API_KEY to your environment to measure whether AI answers mention your brand.",
     );
   }
 
@@ -92,7 +97,10 @@ export async function checkLiveVisibility(
   }
 
   const pairs = prompts.flatMap((prompt) => engines.map((engine) => ({ prompt, engine })));
-  const answers = await Promise.all(pairs.map(({ prompt, engine }) => deps.queryEngine(engine, prompt.text)));
+  const answers: EngineAnswer[] = new Array(pairs.length);
+  await pool(pairs, AUDIT_CONCURRENCY, async ({ prompt, engine }, i) => {
+    answers[i] = await deps.queryEngine(engine, prompt.text);
+  });
 
   const results = pairs.map(({ prompt, engine }, i) => {
     const answer = answers[i];
@@ -149,9 +157,9 @@ export async function checkLiveVisibility(
   const missing = VISIBILITY_ENGINES.filter((e) => !engines.includes(e));
   if (missing.length) {
     checks.push({
-      label: `Only ${engines.map(engineLabel).join(" and ")} checked`,
+      label: `Only ${listNames(engines.map(engineLabel))} checked`,
       passed: null,
-      note: `${missing.map(engineLabel).join(" and ")} ${missing.length === 1 ? "isn't" : "aren't"} configured, so ${missing.length === 1 ? "it wasn't" : "they weren't"} included.`,
+      note: `${listNames(missing.map(engineLabel))} ${missing.length === 1 ? "isn't" : "aren't"} configured, so ${missing.length === 1 ? "it wasn't" : "they weren't"} included.`,
     });
   }
 

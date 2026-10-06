@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** "A", "A and B", "A, B and C". */
+export function listNames(names: string[]) {
+  return names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleString("en-IN", {
     day: "numeric",

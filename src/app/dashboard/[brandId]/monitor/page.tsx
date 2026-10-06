@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { MonitorView } from "@/components/monitor/monitor-view";
 import { getBrandOr404 } from "@/lib/brands";
+import { scheduleConfigured } from "@/lib/cron-auth";
 import { configuredEngines } from "@/lib/engines";
+import { lastRuns, nextScheduledRun } from "@/lib/monitor/schedule";
 import { citedSources } from "@/lib/monitor/sources";
 import { listRunsWithStats, MAX_PROMPTS_PER_RUN } from "@/lib/monitor/store";
 import { createClient } from "@/lib/supabase/server";
@@ -38,6 +40,11 @@ export default async function MonitorPage({ params }: { params: Promise<{ brandI
       engines={configuredEngines()}
       runs={runs}
       sources={citedSources(citationRows ?? [], brand.url)}
+      schedule={{
+        enabled: brand.auto_monitor,
+        configured: scheduleConfigured(),
+        next: nextScheduledRun(lastRuns(runs).get(brand.id), Date.now()).toISOString(),
+      }}
     />
   );
 }

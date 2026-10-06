@@ -6,7 +6,7 @@ export const siteConfig = {
   name: "ClearCite",
   tagline: "See whether AI answer engines recommend your brand — and fix it when they don't.",
   description:
-    "AI visibility (AEO/GEO) for Indian brands and organisations. Audit your site, monitor ChatGPT and Claude answers, and track where you're mentioned, cited or missing.",
+    "AI visibility (AEO/GEO) for Indian brands and organisations. Audit your site, monitor ChatGPT, Claude, Gemini and Perplexity answers, and track where you're mentioned, cited or missing.",
   contactEmail: "hello@clearcite.in",
   /** The company behind the product, credited in the footer. */
   company: "Lamzing Technologies Pvt. Ltd.",

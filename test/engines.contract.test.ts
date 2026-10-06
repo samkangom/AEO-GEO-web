@@ -29,6 +29,8 @@ before(async () => {
   const { port } = server.address() as AddressInfo;
   process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${port}`;
   process.env.OPENAI_BASE_URL = `http://127.0.0.1:${port}/v1`;
+  process.env.GEMINI_BASE_URL = `http://127.0.0.1:${port}`;
+  process.env.PERPLEXITY_BASE_URL = `http://127.0.0.1:${port}`;
   process.env.ANTHROPIC_API_KEY = "test-key";
   process.env.OPENAI_API_KEY = "test-key";
 });
@@ -197,17 +199,131 @@ describe("openai adapter", () => {
   });
 });
 
-describe("stub engines", () => {
-  test("Gemini and Perplexity report not configured, never a result", async () => {
+describe("gemini adapter", () => {
+  test("sends Google Search grounding; parses text, grounding domains and model", async () => {
     const { queryEngine } = await import("@/lib/engines");
-    process.env.GEMINI_API_KEY = "set";
-    for (const e of ["gemini", "perplexity"] as const) {
-      const a = await queryEngine(e, "q");
-      assert.equal(a.status, "not_configured");
-      assert.equal(a.text, "");
-    }
+    process.env.GEMINI_API_KEY = "test-key";
+    responder = () => ({
+      body: {
+        modelVersion: "gemini-3-flash",
+        candidates: [
+          {
+            finishReason: "STOP",
+            content: {
+              parts: [
+                { text: "Thinking…", thought: true },
+                { text: "1. Vyapar\n" },
+                { text: "2. Kiranabooks" },
+              ],
+            },
+            groundingMetadata: {
+              webSearchQueries: ["billing software Pune"],
+              groundingChunks: [
+                {
+                  web: {
+                    uri: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc",
+                    title: "kiranabooks.in",
+                  },
+                },
+                {
+                  web: {
+                    uri: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/def",
+                    title: "Not a domain",
+                  },
+                },
+                { web: { uri: "https://www.g2.com/categories/billing", title: "G2" } },
+              ],
+            },
+          },
+        ],
+      },
+    });
+    const a = await queryEngine("gemini", "billing software in Pune");
     delete process.env.GEMINI_API_KEY;
+
+    assert.equal(a.status, "ok");
+    assert.equal(a.text, "1. Vyapar\n2. Kiranabooks", "thought parts are left out");
+    assert.equal(a.modelVersion, "gemini-3-flash");
+    assert.equal(a.webSearchUsed, true);
+    assert.deepEqual(
+      a.citations.map((c) => c.url),
+      ["https://kiranabooks.in/", "https://www.g2.com/categories/billing"],
+      "redirect links become their source domain; unknown ones are dropped",
+    );
+    const req = captured[0];
+    assert.equal(req.path, "/v1beta/models/gemini-flash-latest:generateContent");
+    assert.equal(req.headers["x-goog-api-key"], "test-key");
+    assert.deepEqual(req.body.tools, [{ google_search: {} }]);
+    assert.deepEqual(req.body.contents, [{ role: "user", parts: [{ text: "billing software in Pune" }] }]);
+  });
+
+  test("API errors become a readable error, never an answer", async () => {
+    const { queryEngine } = await import("@/lib/engines");
+    process.env.GEMINI_API_KEY = "bad";
+    responder = () => ({
+      status: 400,
+      body: { error: { code: 400, message: "API key not valid.", status: "INVALID_ARGUMENT" } },
+    });
+    const a = await queryEngine("gemini", "q");
+    delete process.env.GEMINI_API_KEY;
+    assert.equal(a.status, "error");
+    assert.equal(a.text, "");
+    assert.equal(a.error, "Gemini API key was rejected");
+  });
+
+  test("without GEMINI_API_KEY: not configured, no request", async () => {
+    const { queryEngine } = await import("@/lib/engines");
+    const a = await queryEngine("gemini", "q");
+    assert.equal(a.status, "not_configured");
     assert.equal(captured.length, 0);
+  });
+});
+
+describe("perplexity adapter", () => {
+  test("sends sonar with India location; parses text and search results", async () => {
+    const { queryEngine } = await import("@/lib/engines");
+    process.env.PERPLEXITY_API_KEY = "test-key";
+    responder = () => ({
+      body: {
+        model: "sonar",
+        choices: [
+          {
+            finish_reason: "stop",
+            message: { role: "assistant", content: "<think>x</think>1. Kiranabooks [1]" },
+          },
+        ],
+        citations: ["https://kiranabooks.in/pricing", "https://example.com/list"],
+        search_results: [{ title: "Kiranabooks pricing", url: "https://kiranabooks.in/pricing" }],
+      },
+    });
+    const a = await queryEngine("perplexity", "billing software in Pune");
+    delete process.env.PERPLEXITY_API_KEY;
+
+    assert.equal(a.status, "ok");
+    assert.equal(a.text, "1. Kiranabooks [1]");
+    assert.equal(a.modelVersion, "sonar");
+    assert.equal(a.webSearchUsed, true);
+    assert.deepEqual(a.citations, [
+      { url: "https://kiranabooks.in/pricing", title: "Kiranabooks pricing" },
+      { url: "https://example.com/list" },
+    ]);
+    const req = captured[0];
+    assert.equal(req.path, "/chat/completions");
+    assert.equal(req.headers.authorization, "Bearer test-key");
+    assert.equal(req.body.model, "sonar");
+    assert.deepEqual(req.body.messages, [{ role: "user", content: "billing software in Pune" }]);
+    assert.deepEqual(req.body.web_search_options, { user_location: { country: "IN" } });
+  });
+
+  test("retries a rate limit once, then reports it", async () => {
+    const { queryEngine } = await import("@/lib/engines");
+    process.env.PERPLEXITY_API_KEY = "test-key";
+    responder = () => ({ status: 429, body: { error: { message: "Too many requests" } } });
+    const a = await queryEngine("perplexity", "q");
+    delete process.env.PERPLEXITY_API_KEY;
+    assert.equal(captured.length, 2, "one retry");
+    assert.equal(a.status, "error");
+    assert.match(a.error ?? "", /Perplexity rate limit/);
   });
 });
 

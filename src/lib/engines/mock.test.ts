@@ -47,8 +47,11 @@ test("mock mode is never active on the production site", () => {
 });
 
 test("mock engines: available without keys, clearly labelled, deterministic", async () => {
-  assert.deepEqual(configuredEngines(), ["openai", "anthropic"]);
-  assert.deepEqual(configuredEngines(["gemini", "perplexity"]), [], "stub engines stay not configured");
+  assert.deepEqual(
+    configuredEngines(),
+    ["openai", "anthropic", "gemini", "perplexity"],
+    "mock simulates every engine",
+  );
 
   const a = await queryEngine("openai", "best billing app", { context: brand });
   const b = await queryEngine("openai", "best billing app", { context: brand });

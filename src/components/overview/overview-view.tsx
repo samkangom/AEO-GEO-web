@@ -11,7 +11,7 @@ import type { EngineId } from "@/lib/engines/types";
 import { latestDelta, mentionTrend } from "@/lib/monitor/chart";
 import { formatRate } from "@/lib/monitor/stats";
 import type { RunWithStats } from "@/lib/monitor/store";
-import { formatDate } from "@/lib/utils";
+import { formatDate, listNames } from "@/lib/utils";
 
 const LABELS: Record<EngineId, string> = {
   openai: "ChatGPT",
@@ -22,10 +22,10 @@ const LABELS: Record<EngineId, string> = {
 
 const ALL_ENGINES: EngineId[] = ["openai", "anthropic", "gemini", "perplexity"];
 
-/** "ChatGPT and Claude": the engines that answered (or failed) in this run. */
+/** "ChatGPT, Claude and Gemini": the engines that answered (or failed) in this run. */
 function runEngineNames(run: RunWithStats) {
   const names = (Object.keys(run.stats.perEngine) as EngineId[]).map((e) => LABELS[e]);
-  return names.length ? names.join(" and ") : "no engines";
+  return names.length ? listNames(names) : "no engines";
 }
 
 export type OverviewProps = {

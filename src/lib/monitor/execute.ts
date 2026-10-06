@@ -1,5 +1,6 @@
 import type { EngineAnswer, EngineId } from "@/lib/engines/types";
 import type { Sentiment } from "@/lib/engines/claude-tasks";
+import { pool } from "@/lib/pool";
 import { analyzeAnswer, type AnswerAnalysis, type BrandRef } from "@/lib/visibility/analyze";
 
 export type MonitorPrompt = { id: string; text: string };
@@ -23,18 +24,7 @@ export type MonitorDeps = {
 };
 
 /** Upper bound on simultaneous AI calls, to stay inside provider rate limits. */
-export const MONITOR_CONCURRENCY = 8;
-
-async function pool<T>(items: T[], limit: number, worker: (item: T) => Promise<void>) {
-  let next = 0;
-  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
-      const item = items[next++];
-      await worker(item);
-    }
-  });
-  await Promise.all(runners);
-}
+export const MONITOR_CONCURRENCY = 20;
 
 /**
  * Asks every configured engine every prompt (web search on), analyses each

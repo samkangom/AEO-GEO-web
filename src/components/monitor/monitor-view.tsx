@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import type { EngineId } from "@/lib/engines/types";
 import type { RunWithStats } from "@/lib/monitor/store";
 import { formatRate } from "@/lib/monitor/stats";
-import { formatDate } from "@/lib/utils";
+import { formatDate, listNames } from "@/lib/utils";
 import { latestDelta, mentionTrend } from "@/lib/monitor/chart";
 import type { CitedSource } from "@/lib/monitor/sources";
 import { MentionChart } from "./mention-chart";
 import { RunMonitorButton } from "./run-monitor-button";
 import { RunStatusBadge } from "./run-status-badge";
+import { SchedulePanel, type ScheduleInfo } from "./schedule-panel";
 import { StatTile } from "./stat-tile";
 
 const LABELS: Record<EngineId, string> = {
@@ -31,6 +32,7 @@ export type MonitorViewProps = {
   runs: RunWithStats[];
   /** Websites cited by the latest run's answers, most-cited first. */
   sources?: CitedSource[];
+  schedule: ScheduleInfo;
 };
 
 export function MonitorView({
@@ -41,6 +43,7 @@ export function MonitorView({
   engines,
   runs,
   sources = [],
+  schedule,
 }: MonitorViewProps) {
   const latest = runs.find((r) => r.stats.overall.measured > 0);
   const { engines: chartEngines, points } = mentionTrend(runs, engines);
@@ -48,7 +51,7 @@ export function MonitorView({
 
   const calls = activePrompts * engines.length;
   const blocker = !engines.length
-    ? "No AI engines are configured (add OPENAI_API_KEY and/or ANTHROPIC_API_KEY)."
+    ? "No AI engines are configured (add at least one of OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY or PERPLEXITY_API_KEY)."
     : activePrompts === 0
       ? "Activate at least one prompt on the Prompts tab to start monitoring."
       : activePrompts > maxPrompts
@@ -62,9 +65,9 @@ export function MonitorView({
           <div className="space-y-1.5">
             <CardTitle>Monitor</CardTitle>
             <CardDescription className="max-w-2xl">
-              Asks {engines.length ? engines.map((e) => LABELS[e]).join(" and ") : "each AI engine"} every
-              active prompt with web search on, and records whether {brandName} is mentioned, cited, where it
-              ranks, and how it&apos;s described.
+              Asks {engines.length ? listNames(engines.map((e) => LABELS[e])) : "each AI engine"} every active
+              prompt with web search on, and records whether {brandName} is mentioned, cited, where it ranks,
+              and how it&apos;s described.
             </CardDescription>
             <p className="text-sm text-navy-400">
               {activePrompts} active prompt{activePrompts === 1 ? "" : "s"}
@@ -80,6 +83,8 @@ export function MonitorView({
           />
         </CardHeader>
       </Card>
+
+      <SchedulePanel brandId={brandId} schedule={schedule} blocker={blocker} />
 
       {!latest ? (
         <Card>
@@ -196,7 +201,7 @@ export function MonitorView({
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Run history</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
+          <CardContent className="relative overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
               <thead className="text-left text-navy-400">
                 <tr>
@@ -223,6 +228,7 @@ export function MonitorView({
                       <span className="inline-flex items-center gap-1.5">
                         <RunStatusBadge status={r.displayStatus} />
                         {r.mock && <MockBadge />}
+                        {r.trigger === "scheduled" && <Badge variant="muted">Scheduled</Badge>}
                       </span>
                     </td>
                     <td className="py-2 text-right tabular-nums">{r.stats.overall.measured}</td>
@@ -262,14 +268,6 @@ export function MonitorView({
           </CardContent>
         </Card>
       )}
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-navy-100 bg-white px-5 py-4">
-        <span className="font-semibold">Scheduled weekly monitoring</span>
-        <Badge variant="warn">Coming soon</Badge>
-        <span className="text-sm text-navy-400">
-          For now, run the monitor whenever you want fresh answers.
-        </span>
-      </div>
     </div>
   );
 }

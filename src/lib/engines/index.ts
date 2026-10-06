@@ -5,49 +5,30 @@
  */
 import { isMockMode } from "@/lib/mock-mode";
 import { anthropicAdapter } from "./anthropic";
+import { geminiAdapter } from "./gemini";
 import { mockQuery } from "./mock";
 import { openaiAdapter } from "./openai";
-import {
-  notConfigured,
-  type EngineAdapter,
-  type EngineAnswer,
-  type EngineId,
-  type QueryOptions,
-} from "./types";
+import { perplexityAdapter } from "./perplexity";
+import type { EngineAdapter, EngineAnswer, EngineId, QueryOptions } from "./types";
 
 export type { Citation, EngineAnswer, EngineId, QueryContext } from "./types";
-
-/** Not built yet: always reports "not configured" so no result is ever implied. */
-function stubAdapter(id: EngineId, label: string, envVar: string): EngineAdapter {
-  return {
-    id,
-    label,
-    isConfigured: () => false,
-    query: async () => ({
-      ...notConfigured(id, envVar),
-      error: process.env[envVar]
-        ? `${label} support isn't built yet (key found, but the adapter is a stub)`
-        : `${envVar} is not set`,
-    }),
-  };
-}
 
 export const ENGINES: Record<EngineId, EngineAdapter> = {
   openai: openaiAdapter,
   anthropic: anthropicAdapter,
-  gemini: stubAdapter("gemini", "Gemini", "GEMINI_API_KEY"),
-  perplexity: stubAdapter("perplexity", "Perplexity", "PERPLEXITY_API_KEY"),
+  gemini: geminiAdapter,
+  perplexity: perplexityAdapter,
 };
 
-/** Engines used for live visibility checks and monitoring (Gemini/Perplexity join once built). */
-export const VISIBILITY_ENGINES: EngineId[] = ["openai", "anthropic"];
+/** Engines used for live visibility checks and monitoring; each joins when its key is set. */
+export const VISIBILITY_ENGINES: EngineId[] = ["openai", "anthropic", "gemini", "perplexity"];
 
 export function engineLabel(id: EngineId) {
   return ENGINES[id].label;
 }
 
 export function configuredEngines(ids: EngineId[] = VISIBILITY_ENGINES): EngineId[] {
-  // Mock mode simulates the visibility engines; stubs stay "not configured".
+  // Mock mode simulates every visibility engine (answers are labelled "Mock").
   if (isMockMode()) return ids.filter((id) => VISIBILITY_ENGINES.includes(id));
   return ids.filter((id) => ENGINES[id].isConfigured());
 }

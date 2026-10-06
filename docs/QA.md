@@ -79,7 +79,7 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | AUD-11 | Change a brand's type to Political party in Settings, then regenerate prompts (needs Claude). | Questions are neutral and informational (positions, manifestos, funding, local offices). None asks who to vote for, and none contains the party's name or other names. The pricing group is labelled "Funding & membership". |
 | AUD-12 (auto) | Other names. | An answer with "BJP" counts for a brand with other name `BJP`. "Acme Inc." doesn't count for other name `INC`. |
 
-## Live AI visibility (needs OPENAI_API_KEY and/or ANTHROPIC_API_KEY)
+## Live AI visibility (needs at least one AI engine key)
 
 | ID | Steps | Expected |
 | --- | --- | --- |
@@ -87,7 +87,9 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | LIVE-2 | Open Technical details and read 2 answers. | Each "mentioned" matches the answer text. The model name is recorded and `web_search_used` is true. |
 | LIVE-3 | Set only OPENAI_API_KEY. | Only ChatGPT is checked, and an info line says Claude isn't configured. The Prompts tab says generation isn't configured, and live visibility says a Claude key is needed unless the brand already has prompts. |
 | LIVE-4 | Remove both keys. | "Not configured" with "—", and 40 points listed as not measured. No AI calls are made (confirm there are no `engine.*` log lines). |
-| LIVE-5 | Set an invalid OPENAI_API_KEY. | ChatGPT rows say "couldn't check (OpenAI API key was rejected)". The score uses the Claude answers only. |
+| LIVE-5 | Set an invalid OPENAI_API_KEY. | ChatGPT rows say "couldn't check (OpenAI API key was rejected)". The score uses the other engines' answers only. |
+| LIVE-6 | Set GEMINI_API_KEY and PERPLEXITY_API_KEY too, then run an audit. | Each prompt lists ChatGPT, Claude, Gemini and Perplexity. Gemini and Perplexity answers record their model, and their cited sites appear in the answer details. With only some keys set, an info line names the engines that weren't checked. |
+| LIVE-7 | Gemini free tier: run several audits in a row. | If Google's free quota runs out, Gemini rows say "couldn't check (Gemini rate limit or free-tier quota reached…)" and aren't counted. Nothing is estimated. |
 
 ## Prompts
 
@@ -128,6 +130,10 @@ These scores assume **no AI keys**, which makes Live AI visibility "Not configur
 | MON-8 | Activate more than 20 prompts. | Clear message about the 20-prompt limit. The button is disabled. |
 | MON-9 | Phone width (390 px). | Tiles are 2 per row, the chart fits, and the history table scrolls inside its card. |
 | MON-10 | After a run, read "Sources AI answers cite". | Domains are ranked by how many answers cited them (each answer counted once per domain). Your own site is marked "Your site". Other rows say how many of those answers mentioned you. Failed calls are left out. |
+| MON-11 | Monitor tab on a deployment without `CRON_SECRET` or `SUPABASE_SERVICE_ROLE_KEY`. | "Scheduled weekly monitoring" shows "Not set up" and explains why. |
+| MON-12 | With both set: the panel shows "On" and when the next run is due. Click "Turn off", then "Turn on". | The badge switches to "Off" and back. The setting persists after a reload. |
+| MON-13 | `curl -H "Authorization: Bearer $CRON_SECRET" <site>/api/cron/monitor` for a brand with active prompts and no run this week. | The response lists the brand under `started`. About a minute later, a run labelled "Scheduled" appears in the run history. Calling it again immediately starts nothing (`started: []`). |
+| MON-14 (auto) | `curl <site>/api/cron/monitor` with no or a wrong `Authorization` header. | 401 `unauthorized` (503 `not_configured` when CRON_SECRET isn't set). No run is started. |
 
 ## Mock mode & demo data
 

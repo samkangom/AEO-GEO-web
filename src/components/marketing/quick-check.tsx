@@ -100,9 +100,9 @@ export function QuickCheck() {
             </ul>
             <div className="flex flex-wrap items-center gap-4 rounded-xl bg-accent-light p-4">
               <p className="min-w-0 flex-1 text-sm text-accent-dark">
-                <span className="font-semibold">The other 40 points</span> come from asking ChatGPT and Claude
-                real buyer questions about your category. That needs a free account, and you can read every
-                answer.
+                <span className="font-semibold">The other 40 points</span> come from asking ChatGPT, Claude,
+                Gemini and Perplexity real buyer questions about your category. That needs a free account, and
+                you can read every answer.
               </p>
               <Button asChild variant="accent">
                 <Link href="/signup">

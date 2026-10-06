@@ -36,7 +36,7 @@ const CHECKS = [
     icon: MessageSquareText,
     title: "Live AI visibility",
     points: CATEGORY_MAX.live_visibility,
-    body: "We ask ChatGPT and Claude, with web search on, the questions your buyers ask, and check whether you show up.",
+    body: "We ask ChatGPT, Claude, Gemini and Perplexity, with web search on, the questions your buyers ask, and check whether you show up.",
   },
   {
     icon: Bot,
@@ -156,8 +156,8 @@ export default function HomePage() {
             Is ChatGPT recommending your brand — or your competitor?
           </h1>
           <p className="max-w-xl text-lg text-navy-500">
-            Buyers now ask AI assistants for shortlists. {siteConfig.name} shows whether ChatGPT and Claude
-            mention you, where you rank, and exactly what to fix when they don&apos;t.
+            Buyers now ask AI assistants for shortlists. {siteConfig.name} shows whether ChatGPT, Claude,
+            Gemini and Perplexity mention you, where you rank, and exactly what to fix when they don&apos;t.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button variant="accent" size="lg" asChild>

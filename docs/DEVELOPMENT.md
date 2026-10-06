@@ -109,7 +109,7 @@ Browser ──> Next.js (Vercel)
 
 ## 5. Rules of the codebase
 
-1. **RLS is the security boundary.** User-facing code uses the user-scoped client (`lib/supabase/server.ts`). Don't use the service-role key in request paths.
+1. **RLS is the security boundary.** User-facing code uses the user-scoped client (`lib/supabase/server.ts`). The service-role client (`lib/supabase/admin.ts`) is only for the cron routes under `app/api/cron/`, after `checkCronAuth()`. Never use it in a page or server action.
 2. **No fabricated data.** Mock mode is the only exception: it's opt-in, never active on the production site, and every simulated result is stored and shown as mock (`mock-` model names, `monitor_runs.mock`, `detail.mock` on audits, the `MockBadge`). Any new screen that shows AI results must show the badge too. Beyond that: Every AI-visibility number must come from a real API call. When something can't be measured, set the category `status` to `not_configured` / `not_run` / `error` with score 0, and let the UI say so.
 3. **AI providers only through the adapter.** Call `queryEngine()` from `src/lib/engines`. Route handlers never import a provider SDK directly. To add an engine, implement `EngineAdapter` (see `openai.ts`), register it in `ENGINES`, add it to `VISIBILITY_ENGINES`, and add a contract test in `test/engines.contract.test.ts`.
 4. **Schema changes:**
@@ -118,7 +118,7 @@ Browser ──> Next.js (Vercel)
    - Add RLS assertions to `supabase/tests/rls.sql` for any new table.
 5. **Bug fixes start with a failing test:** unit, fixture-site integration, RLS SQL, or e2e, whichever is closest to the bug.
 6. **Log with `log.*` from `src/lib/log.ts`.** Include IDs (`brandId`), never secrets or API keys.
-7. **Scheduled monitoring is not built yet.** When it is, it hooks in as a Vercel Cron route calling the same monitor function that "Run monitor now" uses.
+7. **Scheduled monitoring** is a daily Vercel Cron (`vercel.json`) calling `app/api/cron/monitor/`. It uses the same `runMonitorForBrand()` as "Run monitor now"; the due rules are in `lib/monitor/schedule.ts`.
 
 ## 6. Environment variables
 

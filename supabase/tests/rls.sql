@@ -55,6 +55,7 @@ end $$;
 
 -- Writes to A's rows are silently filtered (0 rows), never applied.
 update public.brands set name = 'pwned' where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+update public.brands set auto_monitor = false where id = 'aaaaaaaa-0000-0000-0000-000000000001';
 delete from public.audits where brand_id = 'aaaaaaaa-0000-0000-0000-000000000001';
 
 -- Inserts that point at A's data must be rejected outright.
@@ -125,6 +126,10 @@ reset role;
 do $$ begin
   assert (select name from public.brands where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'Acme',
     'B''s update must not change A''s brand';
+  assert (select auto_monitor from public.brands where id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+    'B must not switch off A''s scheduled monitoring (and it defaults to on)';
+  assert (select trigger from public.monitor_runs where id = 'aaaaaaaa-0000-0000-0000-0000000000e1') = 'manual',
+    'runs default to manual';
   assert (select count(*) from public.audits where brand_id = 'aaaaaaaa-0000-0000-0000-000000000001') = 1,
     'B''s delete must not remove A''s audit';
 end $$;

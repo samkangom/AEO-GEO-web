@@ -66,6 +66,16 @@ test("health endpoint reports configuration without secrets", async ({ request }
   expect(JSON.stringify(body)).not.toMatch(/sk-|placeholder/);
 });
 
+test("cron endpoints refuse requests without the cron secret", async ({ request }) => {
+  for (const headers of [{}, { authorization: "Bearer wrong" }] as Record<string, string>[]) {
+    const res = await request.get("/api/cron/monitor", { headers });
+    expect([401, 503]).toContain(res.status());
+    expect(await res.json()).not.toHaveProperty("started");
+  }
+  const brand = await request.post("/api/cron/monitor/brand", { data: { brandId: "x" } });
+  expect([401, 503]).toContain(brand.status());
+});
+
 test("landing page: no-sign-up site check scores a site out of 60", async ({ page }) => {
   await page.goto("/#check");
   await page.getByLabel("Website to check").fill("http://127.0.0.1:4002");

@@ -23,6 +23,8 @@ export type Brand = {
   kind: OrgKind;
   /** Other names AI answers may use for the brand ("BJP" for "Bharatiya Janata Party"). */
   aliases: string[];
+  /** Scheduled weekly monitoring on/off. */
+  auto_monitor: boolean;
   created_at: string;
 };
 export type Audit = {
@@ -49,6 +51,8 @@ export type MonitorRun = {
   finished_at: string | null;
   /** Simulated answers (MOCK_AI_RESPONSES mode). */
   mock: boolean;
+  /** Who started the run: a person ("Run monitor now") or the weekly schedule. */
+  trigger: "manual" | "scheduled";
 };
 export type EngineResult = {
   id: string;
@@ -73,10 +77,18 @@ export type Database = {
   public: {
     Tables: {
       profiles: Table<Profile, "id", "company_name" | "created_at">;
-      brands: Table<Brand, "user_id" | "name" | "url", "id" | "industry" | "kind" | "aliases" | "created_at">;
+      brands: Table<
+        Brand,
+        "user_id" | "name" | "url",
+        "id" | "industry" | "kind" | "aliases" | "auto_monitor" | "created_at"
+      >;
       audits: Table<Audit, "brand_id" | "overall_score" | "breakdown", "id" | "created_at">;
       prompts: Table<Prompt, "brand_id" | "text" | "language" | "intent", "id" | "active" | "created_at">;
-      monitor_runs: Table<MonitorRun, "brand_id", "id" | "status" | "started_at" | "finished_at" | "mock">;
+      monitor_runs: Table<
+        MonitorRun,
+        "brand_id",
+        "id" | "status" | "started_at" | "finished_at" | "mock" | "trigger"
+      >;
       engine_results: Table<
         EngineResult,
         "run_id" | "prompt_id" | "engine",

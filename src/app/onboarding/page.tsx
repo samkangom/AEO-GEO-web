@@ -19,7 +19,7 @@ export default async function OnboardingPage() {
         <h1 className="mb-1 text-xl font-semibold">Add your first brand</h1>
         <p className="mb-6 text-sm text-navy-400">
           Just your brand name and website. We&apos;ll check how ready your site is for AI answer engines like
-          ChatGPT and Claude.
+          ChatGPT, Claude, Gemini and Perplexity.
         </p>
         <BrandForm />
       </div>

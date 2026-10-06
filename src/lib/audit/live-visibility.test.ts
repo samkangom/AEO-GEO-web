@@ -94,7 +94,10 @@ test("scores the share of answers mentioning the brand; failed calls are exclude
   assert.equal(r.score, Math.round((40 * 4) / 9));
   assert.match(r.summary, /sometimes — 4 of 9 answers \(ChatGPT 3\/5, Claude 1\/4\)/);
 
-  assert.equal(r.checks.length, 5);
+  // 5 prompts, plus a note that Gemini and Perplexity weren't configured.
+  assert.equal(r.checks.length, 6);
+  assert.match(r.checks[5].label, /Only ChatGPT and Claude checked/);
+  assert.match(r.checks[5].note ?? "", /Gemini and Perplexity aren't configured/);
   const first = r.checks[0];
   assert.equal(first.passed, true);
   assert.match(first.note ?? "", /ChatGPT: mentioned, #2 in its list, links to your site/);
